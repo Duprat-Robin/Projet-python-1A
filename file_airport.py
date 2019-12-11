@@ -3,6 +3,7 @@ openFile will use a function/method from airport to load the project
 or airport can use openFile if we want to avoid cross importation
 draw import file_airport and airport, file_airport import airport (airport doesn't import file_airport)"""
 
+from PyQt5 import QtWidgets
 import os
 import airport, geometry
 
@@ -25,16 +26,18 @@ class FileAirport():
                 c += 1
             return c
         c = naming()
-        self.name = "untitled{}.txt".format(c)
+        self.name = ("untitled{}.txt".format(c), True)
         with open(self.name, 'w') as file:
             pass
 
     def openFile(self):
         """entrer le flilename dans une fenêtre ou un overlay mais ne pas le mettre en paramètre"""
-        filename = ""  # à modifier
-        self.name = filename
+        repository = QtWidgets.QFileDialog()
+        self.name = repository.getOpenFileName()
         points, taxiways, runways = {}, {}, {}
-        file = open(self.name, 'r')
+        path = self.name[0]
+        file = open(path, 'r')
+        print("1st step to open ok")
         airport_name = file.readline().split()[0]
         lines = file.readlines()
         for line in lines:
@@ -58,9 +61,11 @@ class FileAirport():
                 print(error, line)
             file.close()
         self.airport = airport.Airport(airport_name, points, taxiways, runways)
+        print("open success")
 
     def saveFile(self):
-        with open(self.name, 'w') as file:
+        path = self.name[0]
+        with open(path, 'w') as file:
             lines = [self.airport.name + "\n"]
             points = self.airport.points
             taxiways = self.airport.taxiways
@@ -99,10 +104,10 @@ class FileAirport():
 
     def saveAsFile(self):
         """entrer le filepath dans une fenêtre ou un overlay"""
-        if self.name[:8] == "untitled":
+        if self.name[0][:8] == "untitled":
             os.remove(self.name)
-        filepath = ""  # à modifier
-        self.name = filepath
+        repository = QtWidgets.QFileDialog()
+        self.name = repository.getOpenFileName()
         self.saveFile()
 
 

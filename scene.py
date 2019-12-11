@@ -93,6 +93,7 @@ class GraphicsWidget(QtWidgets.QWidget):
         self.scene = QtWidgets.QGraphicsScene()
         self.view = GraphicsZoom(self.scene)
         self.scale_configuration = GraphicsScale(self)
+
         self.scene.addPixmap(self.image)
         self.scene.addItem(self.point_group)
         self.scene.addItem(self.line_group)
