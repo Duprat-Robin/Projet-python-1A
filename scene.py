@@ -43,6 +43,7 @@ class GraphicsScale(QtWidgets.QWidget):
         self.start_pos, self.end_pos = 0, 0
         self.entry_meters = QtWidgets.QLineEdit()
         self.meters_value = 0
+        self.nbr_pixels = 0
 
     def setScale(self):
         """Création de l'échelle: faire en sorte de pouvoir saisir la distance dans un popup menu"""
@@ -51,10 +52,9 @@ class GraphicsScale(QtWidgets.QWidget):
         else:
             self.scale_set = False
             self.end_pos = super().cursor().pos()
-            print(self.end_pos)
-            nbr_pixels = self.distance(self.start_pos, self.end_pos)
-            self.scale_factor = nbr_pixels / self.meters_value
-            self.entry_meters.setText("scale factor = {0}/{1.meters_value} = {1.scale_factor} pxl/m".format(nbr_pixels, self))
+            self.nbr_pixels = self.distance(self.start_pos, self.end_pos)
+            self.scale_factor = self.nbr_pixels / self.meters_value
+            self.entry_meters.setText("scale factor = {0.nbr_pixels}/{0.meters_value} = {0.scale_factor} pxl/m".format(self))
         self.scale_point += 1
 
     def enable_scale_set(self):
@@ -132,6 +132,7 @@ class GraphicsWidget(QtWidgets.QWidget):
                         ['Open File', lambda: self.airport.openFile()],
                         ['Save', lambda: self.airport.saveFile()],
                         ['Save As', lambda: self.airport.saveAsFile()])
+
         add_button('-', lambda: self.view.zoom_view(1 / ZOOM_FACTOR))
         add_button('+', lambda: self.view.zoom_view(ZOOM_FACTOR))
         add_button('Draw mod', lambda: (cursor_set(self), self.view.setDragMode(False)))
@@ -153,9 +154,6 @@ class GraphicsWidget(QtWidgets.QWidget):
         add_shortcut('+', lambda: self.view.zoom_view(ZOOM_FACTOR))
         return toolbar
 
-    def mousePressEvent(self, event):
-        self.view.update()
-
 
 def cursor_set(widget):
     cross_cursor = QtGui.QCursor()
@@ -164,8 +162,10 @@ def cursor_set(widget):
     arrow_cursor.setShape(ARROW)
     if widget.cursor().shape() == ARROW:
         widget.setCursor(cross_cursor)
+        widget.drawing_mode_point()
     elif widget.cursor().shape() == CROSS:
         widget.setCursor(arrow_cursor)
+        widget.drawing_mode_reset()
 
 
 def drag_mod(widget):

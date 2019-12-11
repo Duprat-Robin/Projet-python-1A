@@ -12,22 +12,24 @@ class DrawAirport(scene.GraphicsWidget):
     def __init__(self):
         super().__init__()
         self.point_group.setZValue(POINT_Z_VALUE)
-        self.drawing_mode = 1
+        self.drawing_mode = 0  # 0: ne dessine pas 1: dessine des points 2: dessine des lignes
         self.line_point_list = []
 
     def mousePressEvent(self, event):
-        self.draw_point()
         if (self.scale_configuration.scale_point == 0 or self.scale_configuration.scale_point == 1) and self.scale_configuration.scale_set:
             self.scale_configuration.setScale()
-        if self.drawing_mode == 1 or self.drawing_mode == 2 :
+        if self.drawing_mode == 1 or self.drawing_mode == 2:
             self.draw_point()
         self.view.update()
 
     def mouseDoubleClickEvent(self, a0: QtGui.QMouseEvent) -> None:
-        if self.drawing_mode == 2 and len(self.line_point_list) != 0 :
+        if self.drawing_mode == 2 and len(self.line_point_list) != 0:
             self.draw_line()
             self.line_point_list = []
         self.view.update()
+
+    def drawing_mode_reset(self):
+        self.drawing_mode = 0
 
     def drawing_mode_point(self):
         self.drawing_mode = 1
