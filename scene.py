@@ -82,8 +82,6 @@ class GraphicsWidget(QtWidgets.QWidget):
     """Gère l'affichage des éléments de bases et des barres d'outils"""
     def __init__(self):
         super().__init__()
-        self.point_group = QtWidgets.QGraphicsItemGroup()
-        self.line_group = QtWidgets.QGraphicsItemGroup()
 
         self.image = QtGui.QPixmap()
         self.image.load(IMAGE_FILE)
@@ -95,8 +93,6 @@ class GraphicsWidget(QtWidgets.QWidget):
         self.scale_configuration = GraphicsScale(self)
 
         self.scene.addPixmap(self.image)
-        self.scene.addItem(self.point_group)
-        self.scene.addItem(self.line_group)
 
         root_layout = QtWidgets.QVBoxLayout(self)  # modifie la taille initiale de l'affichage
         toolbar = self.create_toolbar()
@@ -141,6 +137,7 @@ class GraphicsWidget(QtWidgets.QWidget):
         add_button('Set scale', lambda: self.scale_configuration.enable_scale_set())
         add_button('Draw point', lambda: self.drawing_mode_point())
         add_button('Draw line', lambda: self.drawing_mode_line())
+        add_button('Delete point', lambda: self.deleting_mode_point())
 
         toolbar.addWidget(self.scale_configuration.entry_meters)
         self.scale_configuration.entry_meters.editingFinished.connect(self.scale_configuration.edit_meters)
