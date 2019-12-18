@@ -132,12 +132,12 @@ class GraphicsWidget(QtWidgets.QWidget):
 
         add_button('-', lambda: self.view.zoom_view(1 / ZOOM_FACTOR))
         add_button('+', lambda: self.view.zoom_view(ZOOM_FACTOR))
-        add_button('Draw mod', lambda: (cursor_set(self), self.view.setDragMode(False)))
+        add_button('Default mode', lambda: (self.cursor_mode_reset(), cursor_set_default(self), self.view.setDragMode(self.view.NoDrag)))
         add_button('Zoom and drag', lambda: drag_mod(self))
-        add_button('Set scale', lambda: self.scale_configuration.enable_scale_set())
-        add_button('Draw point', lambda: self.drawing_mode_point())
-        add_button('Draw line', lambda: self.drawing_mode_line())
-        add_button('Delete', lambda: self.deleting_mode())
+        add_button('Set scale', lambda: (self.cursor_mode_point, self.scale_configuration.enable_scale_set(), cursor_set_draw(self)))
+        add_button('Draw point', lambda: (self.cursor_mode_point(), cursor_set_draw(self)))
+        add_button('Draw line', lambda: (self.cursor_mode_line(), cursor_set_draw(self)))
+        add_button('Delete', lambda: (self.cursor_deleting_mode(), cursor_set_default(self)))
 
         toolbar.addWidget(self.scale_configuration.entry_meters)
         self.scale_configuration.entry_meters.editingFinished.connect(self.scale_configuration.edit_meters)
@@ -153,17 +153,17 @@ class GraphicsWidget(QtWidgets.QWidget):
         return toolbar
 
 
-def cursor_set(widget):
-    cross_cursor = QtGui.QCursor()
-    cross_cursor.setShape(CROSS)
+def cursor_set_default(widget):
     arrow_cursor = QtGui.QCursor()
     arrow_cursor.setShape(ARROW)
-    if widget.cursor().shape() == ARROW:
-        widget.setCursor(cross_cursor)
-        widget.drawing_mode_point()
-    elif widget.cursor().shape() == CROSS:
-        widget.setCursor(arrow_cursor)
-        widget.drawing_mode_reset()
+    widget.setCursor(arrow_cursor)
+
+
+def cursor_set_draw(widget):
+    widget.view.setDragMode(False)
+    cross_cursor = QtGui.QCursor()
+    cross_cursor.setShape(CROSS)
+    widget.setCursor(cross_cursor)
 
 
 def drag_mod(widget):
@@ -174,6 +174,7 @@ def drag_mod(widget):
         widget.view.setDragMode(widget.view.ScrollHandDrag)
     else:
         widget.view.setDragMode(widget.view.NoDrag)
+    widget.cursor_mode_reset()
 
 
 if __name__ == '__main__':
