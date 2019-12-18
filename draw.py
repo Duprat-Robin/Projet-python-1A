@@ -11,16 +11,22 @@ AIRPORT_FILE = ""
 class DrawAirport(scene.GraphicsWidget):
     def __init__(self):
         super().__init__()
-        self.point_group.setZValue(POINT_Z_VALUE)
-        self.drawing_mode = 0  # 0: ne dessine pas 1: dessine des points 2: dessine des lignes
+        self.drawing_mode = 0  # 0: ne dessine pas 1: dessine des points 2: dessine des lignes 3: efface des items
         self.line_point_list = []
+        self.on_item = False
+        self.current_item = None
 
     def mousePressEvent(self, event):
         if (self.scale_configuration.scale_point == 0 or self.scale_configuration.scale_point == 1) and self.scale_configuration.scale_set:
             self.scale_configuration.setScale()
-        if self.drawing_mode == 1 or self.drawing_mode == 2:
+        if (self.drawing_mode == 1 or self.drawing_mode == 2) and not(self.on_item) :
             self.draw_point()
+        if self.drawing_mode == 3:
+            self.delete()
         self.view.update()
+        if self.on_item:
+            print(self.current_item)
+
 
     def mouseDoubleClickEvent(self, a0: QtGui.QMouseEvent) -> None:
         if self.drawing_mode == 2 and len(self.line_point_list) != 0:
@@ -37,29 +43,42 @@ class DrawAirport(scene.GraphicsWidget):
     def drawing_mode_line(self):
         self.drawing_mode = 2
 
+    def deleting_mode(self):
+        self.drawing_mode = 3
+
     def draw_point(self):
         width = 20
         color = QtGui.QColor(255, 0, 0)
-        pen = QtGui.QPen(color)
+        #pen = QtGui.QPen(color)
         pos_cursor_scene = self.get_coordonates_scene()
         coor_point = QtCore.QRectF(pos_cursor_scene.x() - width / 2, pos_cursor_scene.y() - width / 2, width, width)
-        point = QtWidgets.QGraphicsEllipseItem(coor_point, self.point_group)
+        point = QtWidgets.QGraphicsEllipseItem(coor_point)
         point.setBrush(QtGui.QBrush(color))
-        point.setPen(pen)
+        setHighlight(point,self)
+        self.scene.addItem(point)
+        #point.setPen(pen)
         if self.drawing_mode == 2:
             self.line_point_list.append(pos_cursor_scene)
 
     def draw_line(self):
         width = 10
         color = QtGui.QColor(0, 255, 0)
-        pen = QtGui.QPen(color)
-        pen.setWidth(width)
+        # pen = QtGui.QPen(color)
+        # pen.setWidth(width)
         path = QtGui.QPainterPath()
         path.moveTo(self.line_point_list[0].x(), self.line_point_list[0].y())
         for point in self.line_point_list[1:]:
             path.lineTo(point.x(), point.y())
-        line = QtWidgets.QGraphicsPathItem(path, self.line_group)
-        line.setPen(pen)
+        line = QtWidgets.QGraphicsPathItem(path)
+        setHighlight(line,self)
+        self.scene.addItem(line)
+
+        # line.setPen(pen)
+
+    def delete(self):
+        self.scene.removeItem(self.current_item)
+        self.on_item = False
+        self.view.update()  # met à jour la vue
 
     def get_coordonates_scene(self):
         pos_cursor = self.cursor().pos()
@@ -94,6 +113,21 @@ class DrawAirport(scene.GraphicsWidget):
                     point_type_description = "Deicing point"
             item.setPen(pen)
             item.setToolTip(point_type_description + ' ' + point.name)
+
+def highlight(item,scene):
+    item.setPen(QtGui.QPen(item.pen().color(), item.pen().width() + 2))
+    scene.on_item = True
+    scene.current_item = item
+
+def unhighlight(item,scene):
+    item.setPen(QtGui.QPen(item.pen().color(), item.pen().width() - 2))
+    scene.on_item = False
+    scene.current_item = None
+
+def setHighlight(item,scene):
+    item.setAcceptHoverEvents(True)
+    item.hoverEnterEvent = lambda event: highlight(item,scene)
+    item.hoverLeaveEvent = lambda event: unhighlight(item,scene)
 
 
 if __name__ == '__main__':
