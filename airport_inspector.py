@@ -54,16 +54,22 @@ class AirportInspector(QtWidgets.QWidget):
         return toolbar
 
     def update_widget(self, new_widget):
+        replace = False
         widget_to_remove = self.root_layout.widget()  # Evite des erreurs si aucun des widgets est enable
-        if self.named_point_widget.isVisible():
+        if self.named_point_widget.isVisible() and new_widget is not self.named_point_widget:
             widget_to_remove = self.named_point_widget
-        elif self.taxiway_widget.isVisible():
+            replace = True
+        elif self.taxiway_widget.isVisible() and new_widget is not self.taxiway_widget:
             widget_to_remove = self.taxiway_widget
-        elif self.runway_widget.isVisible():
+            replace = True
+        elif self.runway_widget.isVisible() and new_widget is not self.runway_widget:
             widget_to_remove = self.runway_widget
-        widget_to_remove.setVisible(False)
-        self.root_layout.replaceWidget(widget_to_remove, new_widget)
-        new_widget.setVisible(True)
+            replace = True
+
+        if replace:
+            widget_to_remove.setVisible(False)
+            self.root_layout.replaceWidget(widget_to_remove, new_widget)
+            new_widget.setVisible(True)
 
     def valid_data(self):
         if self.named_point_widget.isVisible():
@@ -146,16 +152,16 @@ class NamedPointInspector(Inspector):
                                       ['coord_label', "Point's coordinates"],
                                       ['coord_display', ""])
         self.name_edit = self.create_line_edit()
-        type_menu = self.create_menu_button("Select a type",
+        self.type_menu = self.create_menu_button("Select a type",
                                             ["Stand", lambda: (self.set_point_type(airport.PointType.STAND),
-                                                               type_menu.setText("Stand"))],
+                                                               self.type_menu.setText("Stand"))],
                                             ["Deicing", lambda: (self.set_point_type(airport.PointType.DEICING),
-                                                                 type_menu.setText("Deicing"))],
+                                                                 self.type_menu.setText("Deicing"))],
                                             ["Runway", lambda: (self.set_point_type(airport.PointType.RUNWAY_POINT),
-                                                                type_menu.setText("Runway"))])
+                                                                self.type_menu.setText("Runway"))])
         # voir comment envoyer les différents parmètre à l'objet et comment récupérer les coordonnées.
         layout = self.create_layout([Box.H, (label_dic['name_label'], self.name_edit)],
-                                    [Box.H, (label_dic['type_label'], type_menu)],
+                                    [Box.H, (label_dic['type_label'], self.type_menu)],
                                     [Box.H, (label_dic['coord_label'], label_dic['coord_display'])])
         root_layout = QtWidgets.QVBoxLayout(self)
         root_layout.addLayout(layout)
@@ -169,6 +175,7 @@ class NamedPointInspector(Inspector):
         self.pt_name = ""
         self.pt_type = None
         self.name_edit.clear()
+        self.type_menu.setText("Select a type")
 
 
 class TaxiwayInspector(Inspector):
@@ -187,23 +194,23 @@ class TaxiwayInspector(Inspector):
                                       ['coord_display', ""])
         self.name_edit = self.create_line_edit()
         self.speed_edit = self.create_line_edit()
-        cat_menu = self.create_menu_button("Select a category",
+        self.cat_menu = self.create_menu_button("Select a category",
                                            ["Light", lambda: (self.update_cat(airport.WakeVortexCategory.LIGHT),
-                                                              cat_menu.setText("Light"))],
+                                                              self.cat_menu.setText("Light"))],
                                            ["Medium", lambda: (self.update_cat(airport.WakeVortexCategory.MEDIUM),
-                                                               cat_menu.setText("Medium"))],
+                                                               self.cat_menu.setText("Medium"))],
                                            ["Heavy", lambda: (self.update_cat(airport.WakeVortexCategory.HEAVY),
-                                                              cat_menu.setText("Heavy"))])
-        one_way_menu = self.create_menu_button("Select True or False",
+                                                              self.cat_menu.setText("Heavy"))])
+        self.one_way_menu = self.create_menu_button("Select True or False",
                                                ["True", lambda: (self.update_one_way(True),
-                                                                 one_way_menu.setText("True"))],
+                                                                 self.one_way_menu.setText("True"))],
                                                ["False", lambda: (self.update_one_way(False),
-                                                                  one_way_menu.setText("False"))])
+                                                                  self.one_way_menu.setText("False"))])
         # voir comment envoyer les différents parmètre à l'objet et comment récupérer les coordonnées.
         layout = self.create_layout([Box.H, (label_dic['name_label'], self.name_edit)],
                                     [Box.H, (label_dic['speed_label'], self.speed_edit)],
-                                    [Box.H, (label_dic['cat_label'], cat_menu)],
-                                    [Box.H, (label_dic['one_way_label'], one_way_menu)],
+                                    [Box.H, (label_dic['cat_label'], self.cat_menu)],
+                                    [Box.H, (label_dic['one_way_label'], self.one_way_menu)],
                                     [Box.H, (label_dic['coord_label'], label_dic['coord_display'])])
         root_layout = QtWidgets.QVBoxLayout(self)
         root_layout.addLayout(layout)
@@ -223,6 +230,8 @@ class TaxiwayInspector(Inspector):
         self.twy_one_way = None
         self.name_edit.clear()
         self.speed_edit.clear()
+        self.cat_menu.setText("Select a category")
+        self.one_way_menu.setText("Select True or False")
 
 
 class RunwayInspector(Inspector):
