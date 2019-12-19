@@ -59,7 +59,7 @@ class Taxiway(geometry.PolyLine):
         self.one_way = one_way
 
     def __repr__(self):
-        return "<airport.Line {0}>".format(self.taxi_name)
+        return "<airport.Line {0}>".format(self.name)
 
 
 class Runway(geometry.PolyLine):
