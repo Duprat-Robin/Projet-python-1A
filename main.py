@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtCore
 import sys
-import draw, airport_inspector
+import airport_inspector, draw
 
 
 if __name__ == '__main__':
