@@ -25,9 +25,7 @@ class DrawAirport(scene.GraphicsWidget):
         self.current_item = None
 
     def mousePressEvent(self, event):
-        if (self.scale_configuration.scale_point == Mode.DEFAULT or self.scale_configuration.scale_point == 1) and self.scale_configuration.scale_set:
-            self.scale_configuration.setScale()
-        if (self.cursor_mode == Mode.DRAW_POINT or self.cursor_mode == Mode.DRAW_LINE) and not(self.on_item):
+        if (self.cursor_mode == Mode.DRAW_POINT or self.cursor_mode == Mode.DRAW_LINE) and not self.on_item:
             self.draw_point()
         if self.cursor_mode == Mode.DELETE:
             self.delete()
@@ -56,11 +54,14 @@ class DrawAirport(scene.GraphicsWidget):
     def draw_point(self):
         width = 20
         color = QtGui.QColor(255, 0, 0)
+        if self.scale_configuration.scale_set:
+            color = QtGui.QColor(0, 0, 255)
+            self.scale_configuration.setScale()
         pos_cursor_scene = self.get_coordonates_scene()
         coor_point = QtCore.QRectF(pos_cursor_scene.x() - width / 2, pos_cursor_scene.y() - width / 2, width, width)
         point = QtWidgets.QGraphicsEllipseItem(coor_point)
         point.setBrush(QtGui.QBrush(color))
-        setHighlight(point,self)
+        setHighlight(point, self)
         self.scene.addItem(point)
         if self.cursor_mode == Mode.DRAW_LINE:
             self.line_point_list.append(pos_cursor_scene)

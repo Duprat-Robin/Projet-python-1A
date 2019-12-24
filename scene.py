@@ -49,13 +49,14 @@ class GraphicsScale(QtWidgets.QWidget):
         """Création de l'échelle: faire en sorte de pouvoir saisir la distance dans un popup menu"""
         if self.scale_point == 0:
             self.start_pos = super().cursor().pos()
-        else:
-            self.scale_set = False
+        elif self.scale_point == 1:
             self.end_pos = super().cursor().pos()
             self.nbr_pixels = self.distance(self.start_pos, self.end_pos)
+        self.scale_point += 1
+        if self.scale_point == 2:
+            self.scale_set = False
             self.scale_factor = self.nbr_pixels / self.meters_value
             self.entry_meters.setText("scale factor = {0.nbr_pixels}/{0.meters_value} = {0.scale_factor} pxl/m".format(self))
-        self.scale_point += 1
 
     def enable_scale_set(self):
         """Active la configuration du zoom"""
@@ -132,9 +133,11 @@ class GraphicsWidget(QtWidgets.QWidget):
 
         add_button('-', lambda: self.view.zoom_view(1 / ZOOM_FACTOR))
         add_button('+', lambda: self.view.zoom_view(ZOOM_FACTOR))
-        add_button('Default mode', lambda: (self.cursor_mode_reset(), cursor_set_default(self), self.view.setDragMode(self.view.NoDrag)))
+        add_button('Default mode', lambda: (self.cursor_mode_reset(), cursor_set_default(self),
+                                            self.view.setDragMode(self.view.NoDrag)))
         add_button('Zoom and drag', lambda: drag_mod(self))
-        add_button('Set scale', lambda: (self.cursor_mode_point, self.scale_configuration.enable_scale_set(), cursor_set_draw(self)))
+        add_button('Set scale', lambda: (self.cursor_mode_point(),  cursor_set_draw(self),
+                                         self.scale_configuration.enable_scale_set()))
         add_button('Draw point', lambda: (self.cursor_mode_point(), cursor_set_draw(self)))
         add_button('Draw line', lambda: (self.cursor_mode_line(), cursor_set_draw(self)))
         add_button('Delete', lambda: (self.cursor_deleting_mode(), cursor_set_default(self)))
