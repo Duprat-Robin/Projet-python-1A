@@ -18,7 +18,7 @@ class AirportInspector(QtWidgets.QWidget):
 
         self.root_layout = QtWidgets.QVBoxLayout(self)
         self.root_layout.addLayout(toolbar_layout)
-        self.root_layout.addWidget(self.named_point_widget)  # par défaut démarre sur NamedPointInspector
+        self.root_layout.addWidget(self.named_point_widget)  # first start is on NamedPointInspector
         self.named_point_widget.setVisible(True)
         self.taxiway_widget.setVisible(False)
         self.runway_widget.setVisible(False)
@@ -55,7 +55,7 @@ class AirportInspector(QtWidgets.QWidget):
 
     def update_widget(self, new_widget):
         replace = False
-        widget_to_remove = self.root_layout.widget()  # Evite des erreurs si aucun des widgets est enable
+        widget_to_remove = self.root_layout.widget()  # Avoid errors if none widget is enable
         if self.named_point_widget.isVisible() and new_widget is not self.named_point_widget:
             widget_to_remove = self.named_point_widget
             replace = True
@@ -74,18 +74,18 @@ class AirportInspector(QtWidgets.QWidget):
     def valid_data(self):
         if self.named_point_widget.isVisible():
             self.named_point_widget.pt_name = self.named_point_widget.name_edit.text()
-            # créer l'objet avant de reset
+            # create the object before resetting the interface end the attributes
             self.named_point_widget.reset()
         elif self.taxiway_widget.isVisible():
             self.taxiway_widget.twy_name = self.taxiway_widget.name_edit.text()
             self.taxiway_widget.twy_speed = float(self.taxiway_widget.speed_edit.text())
-            # créer l'objet avant de reset
+            # create the object before resetting the interface end the attributes
             self.taxiway_widget.reset()
         elif self.runway_widget.isVisible():
             self.runway_widget.rwy_name = self.runway_widget.name_edit.text()
             self.runway_widget.rwy_qfus = self.runway_widget.qfus_edit.text()
             self.runway_widget.rwy_named_point = self.runway_widget.named_points_edit.text()
-            # créer l'objet avant de reset
+            # create the object before resetting the interface end the attributes
             self.runway_widget.reset()
         return None
 
@@ -95,8 +95,8 @@ class Inspector(QtWidgets.QWidget):
         super().__init__()
 
     def create_label(self, *args):
-        """arg[1] = texte dans le label
-        arg[0] = nom du label"""
+        """arg[1] = text in the label
+        arg[0] = label's name"""
         label_dic = {}
 
         for arg in args:
@@ -107,8 +107,8 @@ class Inspector(QtWidgets.QWidget):
         return label_dic
 
     def create_layout(self, *args):
-        """arg[0] = bool indique si H ou non H
-        arg[1] = objet à mettre dans le layout"""
+        """arg[0] = bool: Horizontal (H) or not (V)
+        arg[1] = object to set in the layout"""
         root = QtWidgets.QVBoxLayout()
 
         for arg in args:

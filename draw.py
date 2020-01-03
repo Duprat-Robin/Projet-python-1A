@@ -9,7 +9,7 @@ AIRPORT_FILE = ""
 
 
 class Mode(enum.Enum):
-    """0: ne dessine pas 1: dessine des points 2: dessine des lignes 3: efface des items"""
+    """0: default mode (draw disable) 1: draw points 2: draw lines 3: erase items"""
     DEFAULT = 0
     DRAW_POINT = 1
     DRAW_LINE = 2

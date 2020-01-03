@@ -35,7 +35,6 @@ class GraphicsZoom(QtWidgets.QGraphicsView):
 class GraphicsScale(QtWidgets.QWidget):
     """Définition de l'échelle pour passer des coordonnées métriques de la réalité aux pixel de l'écran"""
     def __init__(self, widget):
-        """L'objet possède les attributs et les méthodes de notre scene (pour les appeller, utiliser super()."""
         super().__init__(widget)
         self.scale_set = False
         self.scale_point = 0
@@ -59,17 +58,17 @@ class GraphicsScale(QtWidgets.QWidget):
             self.entry_meters.setText("scale factor = {0.nbr_pixels}/{0.meters_value} = {0.scale_factor} pxl/m".format(self))
 
     def enable_scale_set(self):
-        """Active la configuration du zoom"""
+        """Enable scale configuration"""
         self.scale_set = True
 
     def distance(self, qpoint1, qpoint2):
-        """Prend des QPoint en paramètres et utilise les méthodes de geometry pour faire les calculs"""
+        """Convert QPoint in geometry Point and compute"""
         point1 = geometry.Point(qpoint1.x(), qpoint1.y())
         point2 = geometry.Point(qpoint2.x(), qpoint2.y())
         return point1.distance(point2)
 
     def screen_to_map(self, temp_origin):
-        """retrouve la position par rapport à la carte d'un point de l'écran """
+        """find the point on the map from is screen position"""
         current_cursor_pos_screen = super().cursor().pos()
         current_cursor_pos_map = ZOOM_FACTOR * factor * self.distance(current_cursor_pos_screen, temp_origin)
         return current_cursor_pos_map
@@ -80,7 +79,7 @@ class GraphicsScale(QtWidgets.QWidget):
 
 
 class GraphicsWidget(QtWidgets.QWidget):
-    """Gère l'affichage des éléments de bases et des barres d'outils"""
+    """Lead the interface and the toolbar"""
     def __init__(self):
         super().__init__()
 

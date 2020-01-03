@@ -19,25 +19,25 @@ class FileAirport():
         self.airport = None  # airport.Airport()
 
     def newFile(self):
-        """La création du fichier permet de faire fonctionner save sans forcer de save as"""
+        """Thanks to naming, we can create an infinity of files without Saving then under an other name
+        But, the default repository is the folder of the software"""
         def naming():
             c = 0
             while os.path.isfile("untitled{}.txt".format(c)):
                 c += 1
             return c
         c = naming()
-        self.name = ("untitled{}.txt".format(c), True)
-        with open(self.name, 'w') as file:
+        self.name = ("untitled{}.txt".format(c), True)  # What's this Boolean?
+        with open(self.name[0], 'w') as file:
             pass
 
     def openFile(self):
-        """entrer le flilename dans une fenêtre ou un overlay mais ne pas le mettre en paramètre"""
+        """Open the file selected in the file explorer of the computer"""
         repository = QtWidgets.QFileDialog()
         self.name = repository.getOpenFileName()
         points, taxiways, runways = {}, {}, {}
         path = self.name[0]
         file = open(path, 'r')
-        print("1st step to open ok")
         airport_name = file.readline().split()[0]
         lines = file.readlines()
         for line in lines:
@@ -61,9 +61,9 @@ class FileAirport():
                 print(error, line)
             file.close()
         self.airport = airport.Airport(airport_name, points, taxiways, runways)
-        print("open success")
 
     def saveFile(self):
+        """Save the file with its current name in its current location"""
         path = self.name[0]
         with open(path, 'w') as file:
             lines = [self.airport.name + "\n"]
@@ -103,9 +103,9 @@ class FileAirport():
             file.writelines(lines)
 
     def saveAsFile(self):
-        """entrer le filepath dans une fenêtre ou un overlay"""
+        """Save the file with the name chosen by the user in the folder chose in the file explorer of the computer"""
         if self.name[0][:8] == "untitled":
-            os.remove(self.name)
+            os.remove(self.name[0])
         repository = QtWidgets.QFileDialog()
         self.name = repository.getOpenFileName()
         self.saveFile()
