@@ -2,6 +2,7 @@ from PyQt5 import QtWidgets
 import enum
 import airport
 
+INSPECTOR_WIDTH = 270
 
 class Box(enum.Enum):
     H = True
@@ -93,6 +94,7 @@ class AirportInspector(QtWidgets.QWidget):
 class Inspector(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
+        self.setMinimumWidth(INSPECTOR_WIDTH)
 
     def create_label(self, *args):
         """arg[1] = text in the label
@@ -139,7 +141,6 @@ class Inspector(QtWidgets.QWidget):
     def create_line_edit(self):
         line_edit = QtWidgets.QLineEdit()
         return line_edit
-
 
 class NamedPointInspector(Inspector):
     def __init__(self):

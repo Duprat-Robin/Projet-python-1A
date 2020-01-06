@@ -107,6 +107,7 @@ class GraphicsWidget(QtWidgets.QWidget):
         self.resize(size_screen.width(), size_screen.height())
         self.view.zoom_view(size_screen.height() * RATIO / old_height_screen)
 
+
         self.showMaximized()
 
     def create_toolbar(self):
