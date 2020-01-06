@@ -23,7 +23,10 @@ class DrawAirport(scene.GraphicsWidget):
         self.line_point_list = []
         self.on_item = False
         self.current_item = None
-
+        self.clicked_item = None
+        self.points_dict = {}
+        self.lines_dict = {}
+        
     def mousePressEvent(self, event):
         if (self.cursor_mode == Mode.DRAW_POINT or self.cursor_mode == Mode.DRAW_LINE) and not self.on_item:
             self.draw_point()
@@ -31,7 +34,13 @@ class DrawAirport(scene.GraphicsWidget):
             self.delete()
         self.view.update()
         if self.on_item:
-            print(self.current_item)
+            if self.clicked_item != None:
+                unhighlight(self.clicked_item, self)
+            self.clicked_item = self.current_item
+            highlight(self.clicked_item,self)
+        elif self.clicked_item != None :
+            unhighlight(self.clicked_item,self)
+            self.clicked_item = None
 
     def mouseDoubleClickEvent(self, event):
         if self.cursor_mode == Mode.DRAW_LINE and len(self.line_point_list) != 0:
@@ -58,11 +67,13 @@ class DrawAirport(scene.GraphicsWidget):
             color = QtGui.QColor(0, 0, 255)
             self.scale_configuration.setScale()
         pos_cursor_scene = self.get_coordonates_scene()
-        coor_point = QtCore.QRectF(pos_cursor_scene.x() - width / 2, pos_cursor_scene.y() - width / 2, width, width)
+        rectx,recty = pos_cursor_scene.x() - width / 2, pos_cursor_scene.y() - width / 2
+        coor_point = QtCore.QRectF(rectx, recty, width, width)
         point = QtWidgets.QGraphicsEllipseItem(coor_point)
         point.setBrush(QtGui.QBrush(color))
         setHighlight(point, self)
         self.scene.addItem(point)
+        self.points_dict[point] = (rectx,recty)
         if self.cursor_mode == Mode.DRAW_LINE:
             self.line_point_list.append(pos_cursor_scene)
 
@@ -76,7 +87,8 @@ class DrawAirport(scene.GraphicsWidget):
         line = QtWidgets.QGraphicsPathItem(path)
         setHighlight(line,self)
         self.scene.addItem(line)
-
+        self.lines_dict[line] = self.line_point_list
+        print(self.lines_dict)
         # line.setPen(pen)
 
     def delete(self):
@@ -118,24 +130,25 @@ class DrawAirport(scene.GraphicsWidget):
             item.setPen(pen)
             item.setToolTip(point_type_description + ' ' + point.name)
 
+            
+def set_on_item(item, widget, setup):
+    if setup:
+        widget.on_item = True
+        widget.current_item = item
+    else:
+        widget.on_item = False
+        widget.current_item = None
 
-def highlight(item,scene):
+def highlight(item,widget):
     item.setPen(QtGui.QPen(item.pen().color(), item.pen().width() + 2))
-    scene.on_item = True
-    scene.current_item = item
-
-
-def unhighlight(item,scene):
+    
+def unhighlight(item,widget):
     item.setPen(QtGui.QPen(item.pen().color(), item.pen().width() - 2))
-    scene.on_item = False
-    scene.current_item = None
-
 
 def setHighlight(item,scene):
     item.setAcceptHoverEvents(True)
-    item.hoverEnterEvent = lambda event: highlight(item,scene)
-    item.hoverLeaveEvent = lambda event: unhighlight(item,scene)
-
+    item.hoverEnterEvent = lambda event: (highlight(item,scene), set_on_item(item, scene, True))
+    item.hoverLeaveEvent = lambda event: (unhighlight(item,scene), set_on_item(item, scene, False))
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
