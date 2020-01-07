@@ -17,6 +17,7 @@ class Mode(enum.Enum):
 
 
 class DrawAirport(scene.GraphicsWidget):
+
     def __init__(self):
         super().__init__()
         self.cursor_mode = Mode.DEFAULT
