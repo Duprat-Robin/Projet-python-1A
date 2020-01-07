@@ -17,30 +17,35 @@ class Mode(enum.Enum):
 
 
 class DrawAirport(scene.GraphicsWidget):
+
     def __init__(self):
         super().__init__()
         self.cursor_mode = Mode.DEFAULT
         self.line_point_list = []
-        self.on_item = False
-        self.current_item = None
-        self.clicked_item = None
         self.points_dict = {}
         self.lines_dict = {}
+        self.on_item = False
+        self.current_item = None  # None | Current item under the cursor
+        self.clicked_item = None  # None | Last clicked item
+        self.highlighted_item = None  # None | Highlighted item when was a clicked_item
         
     def mousePressEvent(self, event):
-        if (self.cursor_mode == Mode.DRAW_POINT or self.cursor_mode == Mode.DRAW_LINE) and not self.on_item:
+        if self.cursor_mode == Mode.DRAW_POINT or self.cursor_mode == Mode.DRAW_LINE :
             self.draw_point()
         if self.cursor_mode == Mode.DELETE:
             self.delete()
+        if self.cursor_mode == Mode.DEFAULT:
+            if self.on_item:
+                self.clicked_item = self.current_item
+                if self.highlighted_item is not None and self.clicked_item is not self.highlighted_item:
+                    unhighlight(self.highlighted_item, self)
+                    self.highlighted_item = None
+                highlight(self.clicked_item, self)
+                self.highlighted_item = self.clicked_item
+            elif self.highlighted_item is not None:
+                unhighlight(self.highlighted_item, self)
+                self.highlighted_item = None
         self.view.update()
-        if self.on_item:
-            if self.clicked_item != None:
-                unhighlight(self.clicked_item, self)
-            self.clicked_item = self.current_item
-            highlight(self.clicked_item,self)
-        elif self.clicked_item != None :
-            unhighlight(self.clicked_item,self)
-            self.clicked_item = None
 
     def mouseDoubleClickEvent(self, event):
         if self.cursor_mode == Mode.DRAW_LINE and len(self.line_point_list) != 0:
@@ -61,49 +66,47 @@ class DrawAirport(scene.GraphicsWidget):
         self.cursor_mode = Mode.DELETE
 
     def draw_point(self):
-        width = 20
-        color = QtGui.QColor(255, 0, 0)
-        if self.scale_configuration.scale_set:
-            color = QtGui.QColor(0, 0, 255)
-            self.scale_configuration.setScale()
-        pos_cursor_scene = self.get_coordonates_scene()
-        rectx,recty = pos_cursor_scene.x() - width / 2, pos_cursor_scene.y() - width / 2
-        coor_point = QtCore.QRectF(rectx, recty, width, width)
-        point = QtWidgets.QGraphicsEllipseItem(coor_point)
-        point.setBrush(QtGui.QBrush(color))
-        setHighlight(point, self)
-        self.scene.addItem(point)
-        self.points_dict[point] = (rectx,recty)
-        if self.cursor_mode == Mode.DRAW_LINE:
-            self.line_point_list.append(pos_cursor_scene)
+        if not(self.on_item) :
+            width = 20
+            color = QtGui.QColor(255, 0, 0)
+            if self.scale_configuration.scale_set:
+                color = QtGui.QColor(0, 0, 255)
+                self.scale_configuration.setScale()
+            pos_cursor_scene = self.get_coordinates_scene()
+            coor_point = QtCore.QRectF(pos_cursor_scene.x() - width / 2, pos_cursor_scene.y() - width / 2, width, width)
+            point = QtWidgets.QGraphicsEllipseItem(coor_point)
+            point.setBrush(QtGui.QBrush(color))
+            setHighlight(point, self)
+            self.scene.addItem(point)
+            self.points_dict[point] = pos_cursor_scene
+            if self.cursor_mode == Mode.DRAW_LINE:
+                self.line_point_list.append((point,pos_cursor_scene))
+        if self.on_item :
+            self.line_point_list.append((self.current_item,self.points_dict[self.current_item]))
 
     def draw_line(self):
         width = 10
         color = QtGui.QColor(0, 255, 0)
         path = QtGui.QPainterPath()
-        path.moveTo(self.line_point_list[0].x(), self.line_point_list[0].y())
+        path.moveTo(self.line_point_list[0][1].x(), self.line_point_list[0][1].y())
         for point in self.line_point_list[1:]:
-            path.lineTo(point.x(), point.y())
+            path.lineTo(point[1].x(), point[1].y())
         line = QtWidgets.QGraphicsPathItem(path)
-        setHighlight(line,self)
+        setHighlight(line, self)
         self.scene.addItem(line)
         self.lines_dict[line] = self.line_point_list
-        print(self.lines_dict)
+
         # line.setPen(pen)
 
     def delete(self):
         self.scene.removeItem(self.current_item)
         self.on_item = False
-        self.view.update()  # met à jour la vue
 
-    def get_coordonates_scene(self):
+    def get_coordinates_scene(self):
         pos_cursor = self.cursor().pos()
-        print(pos_cursor)
         pos_cursor_view = self.view.mapFromGlobal(pos_cursor)
-        print(pos_cursor_view)
         pos_cursor_scene = self.view.mapToScene(pos_cursor_view)
-        print(pos_cursor_scene)
-        return (pos_cursor_scene)
+        return pos_cursor_scene
 
     def draw_airport_points(self, airport):
         """Ne fonctionne pas encore!!!"""
@@ -130,25 +133,24 @@ class DrawAirport(scene.GraphicsWidget):
             item.setPen(pen)
             item.setToolTip(point_type_description + ' ' + point.name)
 
-            
-def set_on_item(item, widget, setup):
-    if setup:
-        widget.on_item = True
-        widget.current_item = item
-    else:
-        widget.on_item = False
-        widget.current_item = None
 
-def highlight(item,widget):
+def highlight(item, widget):
     item.setPen(QtGui.QPen(item.pen().color(), item.pen().width() + 2))
-    
-def unhighlight(item,widget):
-    item.setPen(QtGui.QPen(item.pen().color(), item.pen().width() - 2))
+    widget.on_item = True
+    widget.current_item = item
 
-def setHighlight(item,scene):
+
+def unhighlight(item, widget):
+    item.setPen(QtGui.QPen(item.pen().color(), item.pen().width() - 2))
+    widget.on_item = False
+    widget.current_item = None
+
+
+def setHighlight(item, widget):
     item.setAcceptHoverEvents(True)
-    item.hoverEnterEvent = lambda event: (highlight(item,scene), set_on_item(item, scene, True))
-    item.hoverLeaveEvent = lambda event: (unhighlight(item,scene), set_on_item(item, scene, False))
+    item.hoverEnterEvent = lambda event: highlight(item, widget)
+    item.hoverLeaveEvent = lambda event: unhighlight(item, widget)
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

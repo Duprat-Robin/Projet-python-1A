@@ -4,6 +4,7 @@ import airport
 
 INSPECTOR_WIDTH = 270
 
+
 class Box(enum.Enum):
     H = True
     V = False

@@ -82,7 +82,7 @@ class GraphicsWidget(QtWidgets.QWidget):
     """Lead the interface and the toolbar"""
     def __init__(self):
         super().__init__()
-
+        
         self.image = QtGui.QPixmap()
         self.image.load(IMAGE_FILE)
         self.setMouseTracking(True)
@@ -106,7 +106,6 @@ class GraphicsWidget(QtWidgets.QWidget):
         old_height_screen = self.size().height()
         self.resize(size_screen.width(), size_screen.height())
         self.view.zoom_view(size_screen.height() * RATIO / old_height_screen)
-
 
         self.showMaximized()
 
