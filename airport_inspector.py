@@ -143,6 +143,7 @@ class Inspector(QtWidgets.QWidget):
         line_edit = QtWidgets.QLineEdit()
         return line_edit
 
+
 class NamedPointInspector(Inspector):
     def __init__(self):
         super().__init__()

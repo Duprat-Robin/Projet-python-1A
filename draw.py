@@ -2,7 +2,6 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import sys, enum
 import scene, airport, file_airport
 
-
 POINT_Z_VALUE = 1
 WAY_Z_VALUE = 0
 AIRPORT_FILE = ""
