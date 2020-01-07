@@ -183,3 +183,4 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     Scene = GraphicsWidget()
     sys.exit(app.exec_())
+

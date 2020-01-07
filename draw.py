@@ -156,3 +156,4 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     Scene = DrawAirport()
     sys.exit(app.exec_())
+
