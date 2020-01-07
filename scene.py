@@ -2,7 +2,6 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import sys, math
 import airport, file_airport, geometry
 
-
 ORIGINE_X, ORIGINE_Y = 0, 0
 ZOOM_FACTOR = 1.1
 RATIO = 0.9
