@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys, enum
-import scene, airport, file_airport
+import scene, file_airport
+# ne pas import airport
 
 
 POINT_Z_VALUE = 1
@@ -66,7 +67,7 @@ class DrawAirport(scene.GraphicsWidget):
         self.cursor_mode = Mode.DELETE
 
     def draw_point(self):
-        if not(self.on_item) :
+        if not self.on_item:
             width = 20
             color = QtGui.QColor(255, 0, 0)
             if self.scale_configuration.scale_set:
@@ -80,9 +81,9 @@ class DrawAirport(scene.GraphicsWidget):
             self.scene.addItem(point)
             self.points_dict[point] = pos_cursor_scene
             if self.cursor_mode == Mode.DRAW_LINE:
-                self.line_point_list.append((point,pos_cursor_scene))
-        if self.on_item :
-            self.line_point_list.append((self.current_item,self.points_dict[self.current_item]))
+                self.line_point_list.append((point, pos_cursor_scene))
+        if self.on_item:
+            self.line_point_list.append((self.current_item, self.points_dict[self.current_item]))
 
     def draw_line(self):
         width = 10
