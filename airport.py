@@ -3,9 +3,9 @@
 This module allows to load an airport description file
 and to access to all its elements information."""
 
-from PyQt5 import QtCore
+#from PyQt5 import QtCore
 import enum
-import geometry, draw
+import geometry
 
 
 # Named points types
@@ -89,9 +89,9 @@ class Airport:
     - runways: Runway tuple (runways)"""
 
     # custom signal to ask inspection
-    ask_inspection_signal = QtCore.pyqtSignal(draw.DrawAirport)
+    # ask_inspection_signal = QtCore.pyqtSignal(draw.DrawAirport)
     # custom signal to tell inspector that the selected item has changed
-    item_selected_changed_signal = QtCore.pyqtSignal(dict)
+    # item_selected_changed_signal = QtCore.pyqtSignal(dict)
 
     def __init__(self, name, points, taxiways, runways):
         self.name = name
