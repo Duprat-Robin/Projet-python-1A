@@ -36,6 +36,8 @@ class GraphicsScale(QtWidgets.QWidget):
     """Définition de l'échelle pour passer des coordonnées métriques de la réalité aux pixel de l'écran"""
     def __init__(self, widget):
         super().__init__(widget)
+        self.origin_set = False
+        self.origin_pos = 0
         self.scale_set = False
         self.scale_point = 0
         self.scale_factor = 0  # en pixel/m
@@ -43,6 +45,15 @@ class GraphicsScale(QtWidgets.QWidget):
         self.entry_meters = QtWidgets.QLineEdit()
         self.meters_value = 0
         self.nbr_pixels = 0
+
+    def setOrigin(self):
+        self.origin_pos = super().cursor().pos()
+        print("c'est", self.origin_pos)
+        self.origin_set = False
+
+    def enable_origin_set(self):
+        """Enable origin configuration"""
+        self.origin_set = True
 
     def setScale(self):
         """Création de l'échelle: faire en sorte de pouvoir saisir la distance dans un popup menu"""
@@ -82,7 +93,7 @@ class GraphicsWidget(QtWidgets.QWidget):
     """Lead the interface and the toolbar"""
     def __init__(self):
         super().__init__()
-        
+
         self.image = QtGui.QPixmap()
         self.image.load(IMAGE_FILE)
         self.setMouseTracking(True)
@@ -91,6 +102,7 @@ class GraphicsWidget(QtWidgets.QWidget):
         self.scene = QtWidgets.QGraphicsScene()
         self.view = GraphicsZoom(self.scene)
         self.scale_configuration = GraphicsScale(self)
+        self.origin_configuration = GraphicsScale(self)
 
         self.scene.addPixmap(self.image)
 
@@ -137,6 +149,8 @@ class GraphicsWidget(QtWidgets.QWidget):
         add_button('Zoom and drag', lambda: drag_mod(self))
         add_button('Set scale', lambda: (self.cursor_mode_point(),  cursor_set_draw(self),
                                          self.scale_configuration.enable_scale_set()))
+        add_button('Set origin', lambda: (self.cursor_mode_point(),  cursor_set_draw(self),
+                                         self.origin_configuration.enable_origin_set()))
         add_button('Draw point', lambda: (self.cursor_mode_point(), cursor_set_draw(self)))
         add_button('Draw line', lambda: (self.cursor_mode_line(), cursor_set_draw(self)))
         add_button('Delete', lambda: (self.cursor_deleting_mode(), cursor_set_default(self)))
