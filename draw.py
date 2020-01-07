@@ -2,6 +2,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import sys, enum
 import scene, airport, file_airport
 
+
 POINT_Z_VALUE = 1
 WAY_Z_VALUE = 0
 AIRPORT_FILE = ""
@@ -21,13 +22,15 @@ class DrawAirport(scene.GraphicsWidget):
         super().__init__()
         self.cursor_mode = Mode.DEFAULT
         self.line_point_list = []
+        self.points_dict = {}
+        self.lines_dict = {}
         self.on_item = False
         self.current_item = None  # None | Current item under the cursor
         self.clicked_item = None  # None | Last clicked item
         self.highlighted_item = None  # None | Highlighted item when was a clicked_item
-
+        
     def mousePressEvent(self, event):
-        if (self.cursor_mode == Mode.DRAW_POINT or self.cursor_mode == Mode.DRAW_LINE) and not self.on_item:
+        if self.cursor_mode == Mode.DRAW_POINT or self.cursor_mode == Mode.DRAW_LINE :
             self.draw_point()
         if self.cursor_mode == Mode.DELETE:
             self.delete()
@@ -63,30 +66,35 @@ class DrawAirport(scene.GraphicsWidget):
         self.cursor_mode = Mode.DELETE
 
     def draw_point(self):
-        width = 20
-        color = QtGui.QColor(255, 0, 0)
-        if self.scale_configuration.scale_set:
-            color = QtGui.QColor(0, 0, 255)
-            self.scale_configuration.setScale()
-        pos_cursor_scene = self.get_coordinates_scene()
-        coor_point = QtCore.QRectF(pos_cursor_scene.x() - width / 2, pos_cursor_scene.y() - width / 2, width, width)
-        point = QtWidgets.QGraphicsEllipseItem(coor_point)
-        point.setBrush(QtGui.QBrush(color))
-        setHighlight(point, self)
-        self.scene.addItem(point)
-        if self.cursor_mode == Mode.DRAW_LINE:
-            self.line_point_list.append(pos_cursor_scene)
+        if not(self.on_item) :
+            width = 20
+            color = QtGui.QColor(255, 0, 0)
+            if self.scale_configuration.scale_set:
+                color = QtGui.QColor(0, 0, 255)
+                self.scale_configuration.setScale()
+            pos_cursor_scene = self.get_coordinates_scene()
+            coor_point = QtCore.QRectF(pos_cursor_scene.x() - width / 2, pos_cursor_scene.y() - width / 2, width, width)
+            point = QtWidgets.QGraphicsEllipseItem(coor_point)
+            point.setBrush(QtGui.QBrush(color))
+            setHighlight(point, self)
+            self.scene.addItem(point)
+            self.points_dict[point] = pos_cursor_scene
+            if self.cursor_mode == Mode.DRAW_LINE:
+                self.line_point_list.append((point,pos_cursor_scene))
+        if self.on_item :
+            self.line_point_list.append((self.current_item,self.points_dict[self.current_item]))
 
     def draw_line(self):
         width = 10
         color = QtGui.QColor(0, 255, 0)
         path = QtGui.QPainterPath()
-        path.moveTo(self.line_point_list[0].x(), self.line_point_list[0].y())
+        path.moveTo(self.line_point_list[0][1].x(), self.line_point_list[0][1].y())
         for point in self.line_point_list[1:]:
-            path.lineTo(point.x(), point.y())
+            path.lineTo(point[1].x(), point[1].y())
         line = QtWidgets.QGraphicsPathItem(path)
         setHighlight(line, self)
         self.scene.addItem(line)
+        self.lines_dict[line] = self.line_point_list
 
         # line.setPen(pen)
 
@@ -96,11 +104,8 @@ class DrawAirport(scene.GraphicsWidget):
 
     def get_coordinates_scene(self):
         pos_cursor = self.cursor().pos()
-        print(pos_cursor)
         pos_cursor_view = self.view.mapFromGlobal(pos_cursor)
-        print(pos_cursor_view)
         pos_cursor_scene = self.view.mapToScene(pos_cursor_view)
-        print(pos_cursor_scene)
         return pos_cursor_scene
 
     def draw_airport_points(self, airport):

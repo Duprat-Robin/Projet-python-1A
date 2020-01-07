@@ -126,6 +126,6 @@ def xys_to_points(str_xy_list):
 
 
 if __name__ == "__main__":
-    airport_f = FileAirport()
-    airport_f.openFile("lfpg_map.txt")
-    airport_f.saveAsFile("new_lfbg_map.txt")
+    aeroport = FileAirport()
+    aeroport.openFile("lfpg_map.txt")
+    aeroport.saveAsFile("new_lfbg_map.txt")
