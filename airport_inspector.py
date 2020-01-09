@@ -1,6 +1,6 @@
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 import enum
-import airport
+import file_airport
 
 INSPECTOR_WIDTH = 270
 
@@ -11,7 +11,8 @@ class Box(enum.Enum):
 
 
 class AirportInspector(QtWidgets.QWidget):
-    def __init__(self):
+
+    def __init__(self, the_draw):
         super().__init__()
         self.named_point_widget = NamedPointInspector()
         self.taxiway_widget = TaxiwayInspector()
@@ -25,6 +26,9 @@ class AirportInspector(QtWidgets.QWidget):
         self.taxiway_widget.setVisible(False)
         self.runway_widget.setVisible(False)
 
+        self.draw = the_draw
+
+        self.draw.signal.ask_inspection_signal.connect(self.emit_signal)
         self.show()
 
     def create_toolbar(self):
@@ -54,6 +58,17 @@ class AirportInspector(QtWidgets.QWidget):
         add_button('Check', lambda: self.valid_data())
         toolbar.addStretch()
         return toolbar
+
+    def emit_signal(self):
+        item = self.draw.highlighted_item
+        if type(item) is QtWidgets.QGraphicsEllipseItem:
+            coordinates_str = str((self.draw.airport_items_dict[item].x(), self.draw.airport_items_dict[item].y()))
+            self.named_point_widget.label_dic['coord_display'].setText(coordinates_str)
+        else:
+            list_coordinates = []
+            for elmt in self.draw.airport_items_dict[item]:
+                list_coordinates.append(str((int(elmt[1].x()), int(elmt[1].y()))))
+            self.named_point_widget.label_dic['coord_display'].setText(" ".join(list_coordinates))
 
     def update_widget(self, new_widget):
         replace = False
@@ -143,13 +158,14 @@ class Inspector(QtWidgets.QWidget):
         line_edit = QtWidgets.QLineEdit()
         return line_edit
 
+
 class NamedPointInspector(Inspector):
     def __init__(self):
         super().__init__()
         self.pt_name = ""
         self.pt_type = None  # None | PointType
 
-        label_dic = self.create_label(['name_label', "Name"],
+        self.label_dic = self.create_label(['name_label', "Name"],
                                       ['type_label', "Point's type"],
                                       ['coord_label', "Point's coordinates"],
                                       ['coord_display', ""])
@@ -162,9 +178,9 @@ class NamedPointInspector(Inspector):
                                             ["Runway", lambda: (self.set_point_type(airport.PointType.RUNWAY_POINT),
                                                                 self.type_menu.setText("Runway"))])
         # voir comment envoyer les différents parmètre à l'objet et comment récupérer les coordonnées.
-        layout = self.create_layout([Box.H, (label_dic['name_label'], self.name_edit)],
-                                    [Box.H, (label_dic['type_label'], self.type_menu)],
-                                    [Box.H, (label_dic['coord_label'], label_dic['coord_display'])])
+        layout = self.create_layout([Box.H, (self.label_dic['name_label'], self.name_edit)],
+                                    [Box.H, (self.label_dic['type_label'], self.type_menu)],
+                                    [Box.H, (self.label_dic['coord_label'], self.label_dic['coord_display'])])
         root_layout = QtWidgets.QVBoxLayout(self)
         root_layout.addLayout(layout)
 

@@ -3,7 +3,7 @@ openFile will use a function/method from airport to load the project
 or airport can use openFile if we want to avoid cross importation
 draw import file_airport and airport, file_airport import airport (airport doesn't import file_airport)"""
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 import os
 import airport, geometry
 
@@ -14,9 +14,10 @@ point_types = [airport.PointType.STAND, airport.PointType.DEICING, airport.Point
 
 
 class FileAirport():
+
     def __init__(self):
         self.name = ""
-        self.airport = None  # airport.Airport()
+        self.airport = airport.Airport()  # airport.Airport()
 
     def newFile(self):
         """Thanks to naming, we can create an infinity of files without Saving then under an other name

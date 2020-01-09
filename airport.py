@@ -5,7 +5,7 @@ and to access to all its elements information."""
 
 from PyQt5 import QtCore
 import enum
-import geometry, draw
+import geometry
 
 
 # Named points types
@@ -88,18 +88,14 @@ class Airport:
     - taxiways: Line tuple (taxiways)
     - runways: Runway tuple (runways)"""
 
-    # custom signal to ask inspection
-    ask_inspection_signal = QtCore.pyqtSignal(draw.DrawAirport)
-    # custom signal to tell inspector that the selected item has changed
-    item_selected_changed_signal = QtCore.pyqtSignal(dict)
-
-    def __init__(self, name, points, taxiways, runways):
+    def __init__(self, name="", points={}, taxiways={}, runways={}):
         self.name = name
         self.points = points
         self.taxiways = taxiways
         self.runways = runways
         self.pt_dict = {points[p].name: points[p] for p in points}
         self.qfu_dict = {runways[r].qfus[i]: runways[r] for r in runways for i in range(2)}
+        self.items_dict = {}
 
     def __repr__(self):
         return "<airport.Airport {0}>".format(self.name)

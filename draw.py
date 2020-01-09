@@ -1,7 +1,6 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys, enum
 import scene, file_airport
-# ne pas import airport
 
 
 POINT_Z_VALUE = 1
@@ -17,18 +16,28 @@ class Mode(enum.Enum):
     DELETE = 3
 
 
+class Signal(QtCore.QObject):
+
+    # custom signal to ask inspection
+    ask_inspection_signal = QtCore.pyqtSignal()
+    # custom signal to tell inspector that the selected item has changed
+    #item_selected_changed_signal = QtCore.pyqtSignal(dict)
+
+
 class DrawAirport(scene.GraphicsWidget):
 
     def __init__(self):
         super().__init__()
+        self.airport_file = file_airport.FileAirport()
+        self.airport_items_dict = self.airport_file.airport.items_dict
         self.cursor_mode = Mode.DEFAULT
         self.line_point_list = []
-        self.points_dict = {}
-        self.lines_dict = {}
         self.on_item = False
         self.current_item = None  # None | Current item under the cursor
         self.clicked_item = None  # None | Last clicked item
         self.highlighted_item = None  # None | Highlighted item when was a clicked_item
+        self.signal = Signal()
+        #self.signal.ask_inspection_signal.connect(self.emit_signal)
         
     def mousePressEvent(self, event):
         if self.cursor_mode == Mode.DRAW_POINT or self.cursor_mode == Mode.DRAW_LINE :
@@ -43,6 +52,7 @@ class DrawAirport(scene.GraphicsWidget):
                     self.highlighted_item = None
                 highlight(self.clicked_item, self)
                 self.highlighted_item = self.clicked_item
+                self.signal.ask_inspection_signal.emit()
             elif self.highlighted_item is not None:
                 unhighlight(self.highlighted_item, self)
                 self.highlighted_item = None
@@ -79,11 +89,11 @@ class DrawAirport(scene.GraphicsWidget):
             point.setBrush(QtGui.QBrush(color))
             setHighlight(point, self)
             self.scene.addItem(point)
-            self.points_dict[point] = pos_cursor_scene
+            self.airport_items_dict[point] = pos_cursor_scene
             if self.cursor_mode == Mode.DRAW_LINE:
                 self.line_point_list.append((point, pos_cursor_scene))
         if self.on_item:
-            self.line_point_list.append((self.current_item, self.points_dict[self.current_item]))
+            self.line_point_list.append((self.current_item, self.airport_items_dict[self.current_item]))
 
     def draw_line(self):
         width = 10
@@ -95,7 +105,7 @@ class DrawAirport(scene.GraphicsWidget):
         line = QtWidgets.QGraphicsPathItem(path)
         setHighlight(line, self)
         self.scene.addItem(line)
-        self.lines_dict[line] = self.line_point_list
+        self.airport_items_dict[line] = self.line_point_list
 
         # line.setPen(pen)
 
