@@ -88,7 +88,7 @@ class Airport:
     - taxiways: Line tuple (taxiways)
     - runways: Runway tuple (runways)"""
 
-    def __init__(self, name="", points={}, taxiways={}, runways={}):
+    def __init__(self, name="", points=[], taxiways=[], runways=[]):
         self.name = name
         self.points = points
         self.taxiways = taxiways
