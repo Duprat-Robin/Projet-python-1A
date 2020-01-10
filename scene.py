@@ -95,6 +95,7 @@ class GraphicsScale(QtWidgets.QWidget):
         y_meter = (self.origin_pos.y()-qpoint.y())/self.scale_factor
         return QtCore.QPointF(x_meter, y_meter)
 
+
 class GraphicsWidget(QtWidgets.QWidget):
     """Lead the interface and the toolbar"""
     def __init__(self):

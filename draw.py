@@ -18,10 +18,7 @@ class Mode(enum.Enum):
 
 class Signal(QtCore.QObject):
 
-    # custom signal to ask inspection
     ask_inspection_signal = QtCore.pyqtSignal()
-    # custom signal to tell inspector that the selected item has changed
-    #item_selected_changed_signal = QtCore.pyqtSignal(dict)
 
 
 class DrawAirport(scene.GraphicsWidget):
@@ -93,11 +90,11 @@ class DrawAirport(scene.GraphicsWidget):
             setHighlight(point, self)
             self.scene.addItem(point)
             self.airport_items_dict[point] = pos_cursor_scene
+            print("resultat", self.scale_configuration.scene_to_meters(pos_cursor_scene))  # to rename
             if self.cursor_mode == Mode.DRAW_LINE:
                 self.line_point_list.append((point, pos_cursor_scene))
         if self.on_item:
             self.line_point_list.append((self.current_item, self.airport_items_dict[self.current_item]))
-        print("resultat", self.scale_configuration.scene_to_meters(pos_cursor_scene))  # to rename
 
     def draw_line(self):
         width = 10
