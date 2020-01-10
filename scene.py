@@ -36,6 +36,9 @@ class GraphicsScale(QtWidgets.QWidget):
     """Définition de l'échelle pour passer des coordonnées métriques de la réalité aux pixel de l'écran"""
     def __init__(self, widget):
         super().__init__(widget)
+        self.widget = widget
+        self.origin_set = False
+        self.origin_pos = 0
         self.scale_set = False
         self.scale_point = 0
         self.scale_factor = 0  # en pixel/m
@@ -47,19 +50,29 @@ class GraphicsScale(QtWidgets.QWidget):
     def setScale(self):
         """Création de l'échelle: faire en sorte de pouvoir saisir la distance dans un popup menu"""
         if self.scale_point == 0:
-            self.start_pos = super().cursor().pos()
+            self.start_pos = self.widget.get_coordinates_scene()
         elif self.scale_point == 1:
-            self.end_pos = super().cursor().pos()
+            self.end_pos = self.widget.get_coordinates_scene()
             self.nbr_pixels = self.distance(self.start_pos, self.end_pos)
         self.scale_point += 1
         if self.scale_point == 2:
             self.scale_set = False
             self.scale_factor = self.nbr_pixels / self.meters_value
-            self.entry_meters.setText("scale factor = {0.nbr_pixels}/{0.meters_value} = {0.scale_factor} pxl/m".format(self))
+            self.entry_meters.setText("scale factor = {0.nbr_pixels}/{0.meters_value} = {0.scale_factor} scene_units/m".format(self))
 
     def enable_scale_set(self):
         """Enable scale configuration"""
         self.scale_set = True
+
+    def setOrigin(self):
+        """coordonnées dans scene"""
+        self.origin_pos = self.widget.get_coordinates_scene()
+        print("c'est", self.origin_pos, "et en metres",self.scene_to_meters(self.origin_pos)) ### Enleve le c'est
+        self.origin_set = False
+
+    def enable_origin_set(self):
+        """Enable origin configuration"""
+        self.origin_set = True
 
     def distance(self, qpoint1, qpoint2):
         """Convert QPoint in geometry Point and compute"""
@@ -77,12 +90,16 @@ class GraphicsScale(QtWidgets.QWidget):
         self.meters_value = float(self.entry_meters.text()[:-1])  # suppresion de l'unité
         self.entry_meters.clearFocus()
 
+    def scene_to_meters(self, qpoint):
+        x_meter = (qpoint.x()-self.origin_pos.x())/self.scale_factor
+        y_meter = (self.origin_pos.y()-qpoint.y())/self.scale_factor
+        return QtCore.QPointF(x_meter, y_meter)
 
 class GraphicsWidget(QtWidgets.QWidget):
     """Lead the interface and the toolbar"""
     def __init__(self):
         super().__init__()
-        
+
         self.image = QtGui.QPixmap()
         self.image.load(IMAGE_FILE)
         self.setMouseTracking(True)
@@ -108,6 +125,15 @@ class GraphicsWidget(QtWidgets.QWidget):
         self.view.zoom_view(size_screen.height() * RATIO / old_height_screen)
 
         self.showMaximized()
+
+    def get_coordinates_scene(self):
+        pos_cursor = self.cursor().pos()
+        #print("pixel pos", pos_cursor)
+        pos_cursor_view = self.view.mapFromGlobal(pos_cursor)
+        #print("view pos", pos_cursor_view)
+        pos_cursor_scene = self.view.mapToScene(pos_cursor_view)
+        #print("scene pos", pos_cursor_scene)
+        return pos_cursor_scene
 
     def create_toolbar(self):
         toolbar = QtWidgets.QHBoxLayout()
@@ -137,6 +163,8 @@ class GraphicsWidget(QtWidgets.QWidget):
         add_button('Zoom and drag', lambda: drag_mod(self))
         add_button('Set scale', lambda: (self.cursor_mode_point(),  cursor_set_draw(self),
                                          self.scale_configuration.enable_scale_set()))
+        add_button('Set origin', lambda: (self.cursor_mode_point(),  cursor_set_draw(self),
+                                         self.scale_configuration.enable_origin_set()))
         add_button('Draw point', lambda: (self.cursor_mode_point(), cursor_set_draw(self)))
         add_button('Draw line', lambda: (self.cursor_mode_line(), cursor_set_draw(self)))
         add_button('Delete', lambda: (self.cursor_deleting_mode(), cursor_set_default(self)))

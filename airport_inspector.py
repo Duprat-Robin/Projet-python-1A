@@ -69,7 +69,8 @@ class AirportInspector(QtWidgets.QWidget):
             for elmt in self.draw.airport_items_dict[item]:
                 list_coordinates.append(str((int(elmt[1].x()), int(elmt[1].y()))))
             self.named_point_widget.label_dic['coord_display'].setText(" ".join(list_coordinates))
-            self.taxiway_widget.
+            self.taxiway_widget.label_dic['coord_display'].setText(" ".join(list_coordinates))
+            self.runway_widget.label_dic['coord_display'].setText(" ".join(list_coordinates))
 
     def update_widget(self, new_widget):
         replace = False

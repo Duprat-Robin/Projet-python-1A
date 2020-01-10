@@ -83,7 +83,10 @@ class DrawAirport(scene.GraphicsWidget):
             if self.scale_configuration.scale_set:
                 color = QtGui.QColor(0, 0, 255)
                 self.scale_configuration.setScale()
-            pos_cursor_scene = self.get_coordinates_scene()
+            if self.scale_configuration.origin_set:
+                color = QtGui.QColor(0, 0, 255)
+                self.scale_configuration.setOrigin()
+            pos_cursor_scene = self.get_coordinates_scene()  #??? scale configuration
             coor_point = QtCore.QRectF(pos_cursor_scene.x() - width / 2, pos_cursor_scene.y() - width / 2, width, width)
             point = QtWidgets.QGraphicsEllipseItem(coor_point)
             point.setBrush(QtGui.QBrush(color))
@@ -94,6 +97,7 @@ class DrawAirport(scene.GraphicsWidget):
                 self.line_point_list.append((point, pos_cursor_scene))
         if self.on_item:
             self.line_point_list.append((self.current_item, self.airport_items_dict[self.current_item]))
+        print("resultat", self.scale_configuration.scene_to_meters(pos_cursor_scene))  # to rename
 
     def draw_line(self):
         width = 10
@@ -112,12 +116,6 @@ class DrawAirport(scene.GraphicsWidget):
     def delete(self):
         self.scene.removeItem(self.current_item)
         self.on_item = False
-
-    def get_coordinates_scene(self):
-        pos_cursor = self.cursor().pos()
-        pos_cursor_view = self.view.mapFromGlobal(pos_cursor)
-        pos_cursor_scene = self.view.mapToScene(pos_cursor_view)
-        return pos_cursor_scene
 
     def draw_airport_points(self, airport):
         """Ne fonctionne pas encore!!!"""
