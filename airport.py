@@ -88,7 +88,7 @@ class Airport:
     - taxiways: Line tuple (taxiways)
     - runways: Runway tuple (runways)"""
 
-    def __init__(self, name="", points={}, taxiways={}, runways={}):
+    def __init__(self, name="", points=[], taxiways=[], runways=[]):
         self.name = name
         self.points = points
         self.taxiways = taxiways
@@ -108,4 +108,3 @@ class Airport:
 
     def get_qfu(self, name):
         return name if name in self.qfu_dict else None
-

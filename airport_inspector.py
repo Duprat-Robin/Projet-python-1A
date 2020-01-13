@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtCore
 import enum
-import airport, manual
+import airport, file_airport, manual
 
 INSPECTOR_WIDTH = 270
 
@@ -29,7 +29,7 @@ class AirportInspector(QtWidgets.QWidget):
         self.root_layout.addWidget(manual_disp)
 
         self.draw = the_draw
-
+        self.list_coordinates = []
         self.draw.signal.ask_inspection_signal.connect(self.emit_signal)
         self.show()
 
@@ -63,16 +63,21 @@ class AirportInspector(QtWidgets.QWidget):
 
     def emit_signal(self):
         item = self.draw.highlighted_item
+        self.list_coordinates = []
         if type(item) is QtWidgets.QGraphicsEllipseItem:
-            coordinates_str = str((self.draw.airport_items_dict[item].x(), self.draw.airport_items_dict[item].y()))
-            self.named_point_widget.label_dic['coord_display'].setText(coordinates_str)
+            coordinates = (self.draw.airport_items_dict[item].x(), self.draw.airport_items_dict[item].y())
+            self.list_coordinates.append(coordinates)
+            self.named_point_widget.label_dic['coord_display'].setText("({0[0]:.0f}, {0[1]:.0f})".format(coordinates))
         else:
-            list_coordinates = []
+            list_coordinates_str = []
             for elmt in self.draw.airport_items_dict[item]:
-                list_coordinates.append(str((int(elmt[1].x()), int(elmt[1].y()))))
-            self.named_point_widget.label_dic['coord_display'].setText(" ".join(list_coordinates))
-            self.taxiway_widget.label_dic['coord_display'].setText(" ".join(list_coordinates))
-            self.runway_widget.label_dic['coord_display'].setText(" ".join(list_coordinates))
+                coordinates = (elmt[1].x(), elmt[1].y())  # faire la convertion d'unité
+                self.list_coordinates.append(coordinates)
+                list_coordinates_str.append("({0[0]:.0f}, {0[1]:.0f})".format(coordinates))
+            if self.taxiway_widget.isVisible():
+                self.taxiway_widget.label_dic['coord_display'].setText("\n".join(list_coordinates_str))
+            else:
+                self.runway_widget.label_dic['coord_display'].setText("\n".join(list_coordinates_str))
 
     def update_widget(self, new_widget):
         replace = False
@@ -86,35 +91,51 @@ class AirportInspector(QtWidgets.QWidget):
         elif self.runway_widget.isVisible() and new_widget is not self.runway_widget:
             widget_to_remove = self.runway_widget
             replace = True
-
         if replace:
             widget_to_remove.setVisible(False)
             self.root_layout.replaceWidget(widget_to_remove, new_widget)
             new_widget.setVisible(True)
 
     def valid_data(self):
+        """In NamedPoint class, Taxiway class and Runway class, coordinates of points and items
+        must have a specific format to be understood by the program"""
         if self.named_point_widget.isVisible():
             self.named_point_widget.pt_name = self.named_point_widget.name_edit.text()
-            # create the object before resetting the interface end the attributes
+            point = "{0[0]},{0[1]}".format(self.list_coordinates[0])
+            named_point = airport.NamedPoint(self.named_point_widget.pt_name, self.named_point_widget.pt_type, point)
+            self.draw.airport_file.airport.points.append(named_point)
+            self.draw.airport_file.airport.pt_dict[named_point.name] = named_point
             self.named_point_widget.reset()
+
         elif self.taxiway_widget.isVisible():
             self.taxiway_widget.twy_name = self.taxiway_widget.name_edit.text()
             self.taxiway_widget.twy_speed = float(self.taxiway_widget.speed_edit.text())
-            # create the object before resetting the interface end the attributes
+            coord_str = file_airport.tuple_to_str(self.list_coordinates)
+            coord = file_airport.xys_to_points(coord_str)
+            taxiway = airport.Taxiway(self.taxiway_widget.twy_name, self.taxiway_widget.twy_speed,
+                                      self.taxiway_widget.twy_cat, self.taxiway_widget.twy_one_way, coord)
+            self.draw.airport_file.airport.taxiways.append(taxiway)
             self.taxiway_widget.reset()
         elif self.runway_widget.isVisible():
             self.runway_widget.rwy_name = self.runway_widget.name_edit.text()
-            self.runway_widget.rwy_qfus = self.runway_widget.qfus_edit.text()
+            self.runway_widget.rwy_qfus = self.runway_widget.qfus_edit.text().split()
             self.runway_widget.rwy_named_point = self.runway_widget.named_points_edit.text()
-            # create the object before resetting the interface end the attributes
+            ends_str = file_airport.tuple_to_str(self.list_coordinates)
+            ends = file_airport.xys_to_points(ends_str)
+            runway = airport.Runway(self.runway_widget.rwy_name, self.runway_widget.rwy_qfus[0],
+                                    self.runway_widget.rwy_qfus[1], ends, self.runway_widget.rwy_named_point)
+            self.draw.airport_file.airport.runways.append(runway)
+            self.draw.airport_file.airport.qfu_dict[runway.qfus[0]] = runway
+            self.draw.airport_file.airport.qfu_dict[runway.qfus[1]] = runway
             self.runway_widget.reset()
-        return None
 
 
 class Inspector(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-        self.setMinimumWidth(INSPECTOR_WIDTH)
+        #self.setMinimumWidth(INSPECTOR_WIDTH)
+        #self.setMaximumWidth(INSPECTOR_WIDTH)
+        self.setFixedWidth(INSPECTOR_WIDTH)  # Inspector's Width is fixed
 
     def create_label(self, *args):
         """arg[1] = text in the label
