@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtCore
 import enum
-import airport, file_airport
+import airport, file_airport, manual
 
 INSPECTOR_WIDTH = 270
 
@@ -25,6 +25,8 @@ class AirportInspector(QtWidgets.QWidget):
         self.named_point_widget.setVisible(True)
         self.taxiway_widget.setVisible(False)
         self.runway_widget.setVisible(False)
+        manual_disp = manual.Manual()
+        self.root_layout.addWidget(manual_disp)
 
         self.draw = the_draw
         self.list_coordinates = []

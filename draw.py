@@ -34,7 +34,7 @@ class DrawAirport(scene.GraphicsWidget):
         self.clicked_item = None  # None | Last clicked item
         self.highlighted_item = None  # None | Highlighted item when was a clicked_item
         self.signal = Signal()
-        
+
     def mousePressEvent(self, event):
         if self.cursor_mode == Mode.DRAW_POINT or self.cursor_mode == Mode.DRAW_LINE :
             self.draw_point()

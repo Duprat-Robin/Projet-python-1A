@@ -7,6 +7,7 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
     scene = draw.DrawAirport()
+
     inspector = airport_inspector.AirportInspector(scene)
     inspector_dock = QtWidgets.QDockWidget()
     inspector_dock.setWidget(inspector)
