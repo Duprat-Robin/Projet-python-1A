@@ -43,7 +43,7 @@ class GraphicsScale(QtWidgets.QWidget):
         self.scale_point = 0
         self.scale_factor = 0  # en pixel/m
         self.start_pos, self.end_pos = 0, 0
-        self.entry_meters = QtWidgets.QLineEdit()
+        self.entry_meters = QtWidgets.QLineEdit("m")
         self.meters_value = 0
         self.nbr_pixels = 0
 
@@ -67,7 +67,7 @@ class GraphicsScale(QtWidgets.QWidget):
     def setOrigin(self):
         """coordonnées dans scene"""
         self.origin_pos = self.widget.get_coordinates_scene()
-        print("c'est", self.origin_pos, "et en metres",self.scene_to_meters(self.origin_pos)) ### Enleve le c'est
+        #print("c'est", self.origin_pos, "et en metres",self.scene_to_meters(self.origin_pos)) ### Enleve le c'est
         self.origin_set = False
 
     def enable_origin_set(self):
@@ -142,6 +142,7 @@ class GraphicsWidget(QtWidgets.QWidget):
             button = QtWidgets.QPushButton(text)
             button.clicked.connect(slot)
             toolbar.addWidget(button)
+
 
         def add_menu_button(text, *args):
             button = QtWidgets.QPushButton(text)
