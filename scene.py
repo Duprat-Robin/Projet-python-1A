@@ -67,7 +67,6 @@ class GraphicsScale(QtWidgets.QWidget):
     def setOrigin(self):
         """coordonnées dans scene"""
         self.origin_pos = self.widget.get_coordinates_scene()
-        #print("c'est", self.origin_pos, "et en metres",self.scene_to_meters(self.origin_pos)) ### Enleve le c'est
         self.origin_set = False
 
     def enable_origin_set(self):

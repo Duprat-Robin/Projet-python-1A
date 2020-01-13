@@ -4,7 +4,7 @@ or airport can use openFile if we want to avoid cross importation
 draw import file_airport and airport, file_airport import airport (airport doesn't import file_airport)"""
 
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 import os
 import airport, geometry
 
@@ -72,8 +72,8 @@ class FileAirport():
             points = self.airport.points
             taxiways = self.airport.taxiways
             runways = self.airport.runways
-            for name in points:
-                point = points[name]
+            for point in points:
+                # point = points[name]
                 if point.type == point_types[0]:
                     type = 0
                 elif point.type == point_types[1]:
@@ -109,7 +109,7 @@ class FileAirport():
         if self.name[0][:8] == "untitled":
             os.remove(self.name[0])
         repository = QtWidgets.QFileDialog()
-        self.name = repository.getOpenFileName()
+        self.name = repository.getSaveFileName()
         self.saveFile()
 
 

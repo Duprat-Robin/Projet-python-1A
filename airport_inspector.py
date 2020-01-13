@@ -65,15 +65,16 @@ class AirportInspector(QtWidgets.QWidget):
         item = self.draw.highlighted_item
         self.list_coordinates = []
         if type(item) is QtWidgets.QGraphicsEllipseItem:
-            coordinates = (self.draw.airport_items_dict[item].x(), self.draw.airport_items_dict[item].y())
-            self.list_coordinates.append(coordinates)
-            self.named_point_widget.label_dic['coord_display'].setText("({0[0]:.0f}, {0[1]:.0f})".format(coordinates))
+            coordinates = self.draw.airport_items_dict[item]
+            coordinates_meters = self.draw.scale_configuration.scene_to_meters(coordinates)
+            self.list_coordinates.append((int(coordinates_meters.x()), int(coordinates_meters.y())))
+            self.named_point_widget.label_dic['coord_display'].setText("({0:.0f}, {1:.0f})".format(coordinates_meters.x(), coordinates_meters.y()))
         else:
             list_coordinates_str = []
             for elmt in self.draw.airport_items_dict[item]:
-                coordinates = (elmt[1].x(), elmt[1].y())  # faire la convertion d'unité
-                self.list_coordinates.append(coordinates)
-                list_coordinates_str.append("({0[0]:.0f}, {0[1]:.0f})".format(coordinates))
+                coordinates_meters = self.draw.scale_configuration.scene_to_meters(elmt[1])
+                self.list_coordinates.append((int(coordinates_meters.x()), int(coordinates_meters.y())))
+                list_coordinates_str.append("({0:.0f}, {1:.0f})".format(coordinates_meters.x(), coordinates_meters.y()))
             if self.taxiway_widget.isVisible():
                 self.taxiway_widget.label_dic['coord_display'].setText("\n".join(list_coordinates_str))
             else:
