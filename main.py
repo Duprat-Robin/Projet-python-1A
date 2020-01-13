@@ -9,7 +9,7 @@ if __name__ == '__main__':
     draw_scene = draw.DrawAirport()
     draw_scene.airport_file.newFile()  # at the opening of the app, we create a new file by default
 
-    inspector = airport_inspector.AirportInspector(scene)
+    inspector = airport_inspector.AirportInspector(draw_scene)
     inspector_dock = QtWidgets.QDockWidget()
     inspector_dock.setWidget(inspector)
 

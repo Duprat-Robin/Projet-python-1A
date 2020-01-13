@@ -58,7 +58,7 @@ class GraphicsScale(QtWidgets.QWidget):
         if self.scale_point == 2:
             self.scale_set = False
             self.scale_factor = self.nbr_pixels / self.meters_value
-            self.entry_meters.setText("scale factor = {0.nbr_pixels}/{0.meters_value} = {0.scale_factor} scene_units/m".format(self))
+            self.entry_meters.setText("scale factor = {0.nbr_pixels:.3f}/{0.meters_value} = {0.scale_factor:.3f} scene_units/m".format(self))
 
     def enable_scale_set(self):
         """Enable scale configuration"""
