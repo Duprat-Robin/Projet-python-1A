@@ -93,6 +93,7 @@ class DrawAirport(scene.GraphicsWidget):
                 self.line_point_list.append((point, pos_cursor_scene))
         if self.on_item:
             self.line_point_list.append((self.current_item, self.airport_items_dict[self.current_item]))
+        #print("test", pos_cursor_scene, self.scale_configuration.meters_to_scene(self.scale_configuration.scene_to_meters(pos_cursor_scene)))
 
     def draw_line(self):
         width = 10

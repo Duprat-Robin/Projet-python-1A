@@ -10,6 +10,7 @@ IMAGE_FILE = "lfbo_adc.jpg"
 ARROW, CROSS = 0, 2
 
 
+
 class GraphicsZoom(QtWidgets.QGraphicsView):
     """Contrôle le zoom de l'application"""
     def __init__(self, scene):
@@ -67,7 +68,7 @@ class GraphicsScale(QtWidgets.QWidget):
     def setOrigin(self):
         """coordonnées dans scene"""
         self.origin_pos = self.widget.get_coordinates_scene()
-        #print("c'est", self.origin_pos, "et en metres",self.scene_to_meters(self.origin_pos)) ### Enleve le c'est
+        #print("c'est", self.origin_pos, "et en metres",self.scene_to_meters(self.origin_pos)") ### Enleve le c'est
         self.origin_set = False
 
     def enable_origin_set(self):
@@ -94,6 +95,12 @@ class GraphicsScale(QtWidgets.QWidget):
         x_meter = (qpoint.x()-self.origin_pos.x())/self.scale_factor
         y_meter = (self.origin_pos.y()-qpoint.y())/self.scale_factor
         return QtCore.QPointF(x_meter, y_meter)
+
+    def meters_to_scene(self, qpoint):
+        x_scene = self.origin_pos.x() + qpoint.x()*self.scale_factor
+        y_scene = self.origin_pos.y() - qpoint.y()*self.scale_factor
+        return QtCore.QPointF(x_scene, y_scene)
+
 
 
 class GraphicsWidget(QtWidgets.QWidget):
