@@ -6,7 +6,6 @@ import file_airport, geometry
 ORIGINE_X, ORIGINE_Y = 0, 0
 ZOOM_FACTOR = 1.1
 RATIO = 0.9
-IMAGE_FILE = "lfbo_adc.jpg"
 ARROW, CROSS = 0, 2
 
 
@@ -113,15 +112,12 @@ class GraphicsWidget(QtWidgets.QWidget):
         super().__init__()
 
         self.image = QtGui.QPixmap()
-        self.image.load(IMAGE_FILE)
         self.setMouseTracking(True)
         self.airport_file = file_airport.FileAirport()
 
         self.scene = QtWidgets.QGraphicsScene()
         self.view = GraphicsZoom(self.scene)
         self.scale_configuration = GraphicsScale(self)
-
-        self.scene.addPixmap(self.image)
 
         root_layout = QtWidgets.QVBoxLayout(self)  # modifie la taille initiale de l'affichage
         toolbar = self.create_toolbar()
@@ -147,6 +143,17 @@ class GraphicsWidget(QtWidgets.QWidget):
         #print("scene pos", pos_cursor_scene)
         return pos_cursor_scene
 
+    def open_image(self):
+        repository = QtWidgets.QFileDialog()
+        self.image.load(str(repository.getOpenFileName()[0]))
+        self.scene.addPixmap(self.image)
+
+        screen = QtWidgets.QDesktopWidget()
+        size_screen = screen.screenGeometry(screen.screenNumber(self))
+        self.view.fitInView(self.view.sceneRect(), QtCore.Qt.KeepAspectRatio)
+        old_height_screen = self.size().height()
+        self.view.zoom_view(size_screen.height() * RATIO / old_height_screen)
+
     def create_toolbar(self):
         toolbar = QtWidgets.QHBoxLayout()
 
@@ -167,7 +174,8 @@ class GraphicsWidget(QtWidgets.QWidget):
                         ['Open File', lambda: (self.airport_file.openFile(), self.draw_airport_points(),
                                                self.scale_configuration.open_scale_origin())],
                         ['Save', lambda: self.airport_file.saveFile()],
-                        ['Save As', lambda: self.airport_file.saveAsFile()])
+                        ['Save As', lambda: self.airport_file.saveAsFile()],
+                        ['Open Image', lambda: self.open_image()])
 
         add_button('-', lambda: self.view.zoom_view(1 / ZOOM_FACTOR))
         add_button('+', lambda: self.view.zoom_view(ZOOM_FACTOR))
@@ -194,7 +202,6 @@ class GraphicsWidget(QtWidgets.QWidget):
         add_shortcut('-', lambda: self.view.zoom_view(1/ZOOM_FACTOR))
         add_shortcut('+', lambda: self.view.zoom_view(ZOOM_FACTOR))
         return toolbar
-
 
 
 def cursor_set_default(widget):
