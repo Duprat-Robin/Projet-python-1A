@@ -4,7 +4,7 @@ or airport can use openFile if we want to avoid cross importation
 draw import file_airport and airport, file_airport import airport (airport doesn't import file_airport)"""
 
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 import os
 import airport, geometry
 
@@ -37,7 +37,7 @@ class FileAirport():
         """Open the file selected in the file explorer of the computer"""
         repository = QtWidgets.QFileDialog()
         self.name = repository.getOpenFileName()
-        points, taxiways, runways = {}, {}, {}
+        points, taxiways, runways = [], [], []
         path = self.name[0]
         file = open(path, 'r')
         airport_name = file.readline().split()[0]
@@ -48,17 +48,17 @@ class FileAirport():
             try:
                 if words[0] == 'P':  # Point description
                     pt_type = point_types[int(words[2])]
-                    points[name] = airport.NamedPoint(name, pt_type, words[3])
+                    points.append(airport.NamedPoint(name, pt_type, words[3]))
                 elif words[0] == 'L':  # Taxiway description
                     speed = int(words[2])
                     cat = categories[words[3]]
                     one_way = words[4] == 'S'
                     xys = xys_to_points(words[5:])
-                    taxiways[name] = airport.Taxiway(name, speed, cat, one_way, xys)
+                    taxiways.append(airport.Taxiway(name, speed, cat, one_way, xys))
                 elif words[0] == 'R':  # Runway description
                     pts = tuple(words[4].split(','))
                     xys = xys_to_points(words[5:])
-                    runways[name] = airport.Runway(name, words[2], words[3], xys, pts)
+                    runways.append(airport.Runway(name, words[2], words[3], xys, pts))
             except Exception as error:
                 print(error, line)
             file.close()
@@ -73,7 +73,6 @@ class FileAirport():
             taxiways = self.airport.taxiways
             runways = self.airport.runways
             for point in points:
-                # point = points[name]
                 if point.type == point_types[0]:
                     type = 0
                 elif point.type == point_types[1]:
@@ -81,8 +80,7 @@ class FileAirport():
                 elif point.type == point_types[2]:
                     type = 2
                 lines.append("P {0.name} {1} {0.x},{0.y}\n".format(point, type))
-            for name in taxiways:
-                taxiway = taxiways[name]
+            for taxiway in taxiways:
                 if taxiway.cat == categories['L']:
                     cat = 'L'
                 elif taxiway.cat == categories['M']:
@@ -96,8 +94,7 @@ class FileAirport():
                 coords_str = tuple_to_str(taxiway.coords)
                 lines.append("L {0.name} {0.speed} {1} {2}".format(taxiway, cat, one_way))
                 lines[-1] = " ".join([lines[-1], coords_str, "\n"])
-            for name in runways:
-                runway = runways[name]
+            for runway in runways:
                 points_str = tuple_to_str(runway.named_points)
                 ends_str = tuple_to_str(runway.coords)
                 lines.append("R {0.name} {0.qfus[0]} {0.qfus[1]} ".format(runway))

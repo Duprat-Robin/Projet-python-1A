@@ -93,8 +93,8 @@ class Airport:
         self.points = points
         self.taxiways = taxiways
         self.runways = runways
-        self.pt_dict = {points[p].name: points[p] for p in points}
-        self.qfu_dict = {runways[r].qfus[i]: runways[r] for r in runways for i in range(2)}
+        self.pt_dict = {p.name: p for p in points}
+        self.qfu_dict = {r.qfus[i]: r for r in runways for i in range(2)}
         self.items_dict = {}
 
     def __repr__(self):

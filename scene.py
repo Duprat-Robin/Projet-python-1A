@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys, math
-import airport, file_airport, geometry
+import file_airport, geometry
 
 
 ORIGINE_X, ORIGINE_Y = 0, 0
@@ -94,6 +94,12 @@ class GraphicsScale(QtWidgets.QWidget):
         y_meter = (self.origin_pos.y()-qpoint.y())/self.scale_factor
         return QtCore.QPointF(x_meter, y_meter)
 
+    def meters_to_scene(self, qpoint):
+        x_scene = self.origin_pos.x() + qpoint.x()*self.scale_factor
+        y_scene = self.origin_pos.y() - qpoint.y()*self.scale_factor
+        return QtCore.QPointF(x_scene, y_scene)
+
+
 
 class GraphicsWidget(QtWidgets.QWidget):
     """Lead the interface and the toolbar"""
@@ -103,7 +109,7 @@ class GraphicsWidget(QtWidgets.QWidget):
         self.image = QtGui.QPixmap()
         self.image.load(IMAGE_FILE)
         self.setMouseTracking(True)
-        self.airport = file_airport.FileAirport()
+        self.airport_file = file_airport.FileAirport()
 
         self.scene = QtWidgets.QGraphicsScene()
         self.view = GraphicsZoom(self.scene)
@@ -143,7 +149,6 @@ class GraphicsWidget(QtWidgets.QWidget):
             button.clicked.connect(slot)
             toolbar.addWidget(button)
 
-
         def add_menu_button(text, *args):
             button = QtWidgets.QPushButton(text)
             menu = QtWidgets.QMenu()
@@ -152,10 +157,10 @@ class GraphicsWidget(QtWidgets.QWidget):
             button.setMenu(menu)
             toolbar.addWidget(button)
 
-        add_menu_button('File', ['New File', lambda: self.airport.newFile()],
-                        ['Open File', lambda: self.airport.openFile()],
-                        ['Save', lambda: self.airport.saveFile()],
-                        ['Save As', lambda: self.airport.saveAsFile()])
+        add_menu_button('File', ['New File', lambda: self.airport_file.newFile()],
+                        ['Open File', lambda: (self.airport_file.openFile(), self.draw_airport_points())],
+                        ['Save', lambda: self.airport_file.saveFile()],
+                        ['Save As', lambda: self.airport_file.saveAsFile()])
 
         add_button('-', lambda: self.view.zoom_view(1 / ZOOM_FACTOR))
         add_button('+', lambda: self.view.zoom_view(ZOOM_FACTOR))
