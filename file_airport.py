@@ -49,10 +49,10 @@ class FileAirport():
             name = words[1]
             try:
                 if words[0] == 'O':  # Origin and scale factor description
-                    xy_str = words[1].strip(',')
+                    xy_str = words[1].split(',')
                     x, y = float(xy_str[0]), float(xy_str[1])
                     origin = QtCore.QPointF(x, y)
-                    factor = (words[2], words[3], words[4])
+                    factor = (float(words[2]), float(words[3]), float(words[4]))
                 if words[0] == 'P':  # Point description
                     pt_type = point_types[int(words[2])]
                     points.append(airport.NamedPoint(name, pt_type, words[3]))
@@ -77,7 +77,8 @@ class FileAirport():
         lines = []
         with open(path, 'w') as file:
             lines.append(self.airport.name + "\n")
-            lines.append("O {0.origin.x()},{0.origin.y()} {0.factor[0]} {0.factor[1]} {0.factor[2]}\n".format(self.airport))
+            lines.append("O {0},{1} {2[0]} {2[1]} {2[2]}\n".format(self.airport.origin.x(), self.airport.origin.y(),
+                                                                   self.airport.factor))
             points = self.airport.points
             taxiways = self.airport.taxiways
             runways = self.airport.runways

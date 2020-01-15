@@ -57,7 +57,7 @@ class AirportInspector(QtWidgets.QWidget):
                                                                 menu_object.setText("Taxiway selected"))],
                                       ['Runway data', lambda: (self.update_widget(self.runway_widget),
                                                                menu_object.setText("Runway selected"))])
-        add_button('Check', lambda: self.valid_data())
+        add_button('OK', lambda: self.valid_data())
         toolbar.addStretch()
         return toolbar
 
@@ -134,8 +134,6 @@ class AirportInspector(QtWidgets.QWidget):
 class Inspector(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-        #self.setMinimumWidth(INSPECTOR_WIDTH)
-        #self.setMaximumWidth(INSPECTOR_WIDTH)
         self.setFixedWidth(INSPECTOR_WIDTH)  # Inspector's Width is fixed
 
     def create_label(self, *args):
@@ -219,16 +217,15 @@ class NamedPointInspector(Inspector):
         self.pt_name = ""
         self.pt_type = None
         self.name_edit.clear()
-        self.type_menu.setText("Select a type")
 
 
 class TaxiwayInspector(Inspector):
     def __init__(self):
         super().__init__()
         self.twy_name = ""
-        self.twy_speed = 0
+        self.twy_speed = 10
         self.twy_cat = None  # None | WakeVortexCategory
-        self.twy_one_way = None  # None | bool
+        self.twy_one_way = False
 
         self.label_dic = self.create_label(['name_label', "Name"],
                                       ['speed_label', "Speed"],
@@ -238,6 +235,7 @@ class TaxiwayInspector(Inspector):
                                       ['coord_display', ""])
         self.name_edit = self.create_line_edit()
         self.speed_edit = self.create_line_edit()
+        self.speed_edit.setText(str(self.twy_speed))
         self.cat_menu = self.create_menu_button("Select a category",
                                            ["Light", lambda: (self.update_cat(airport.WakeVortexCategory.LIGHT),
                                                               self.cat_menu.setText("Light"))],
@@ -245,7 +243,7 @@ class TaxiwayInspector(Inspector):
                                                                self.cat_menu.setText("Medium"))],
                                            ["Heavy", lambda: (self.update_cat(airport.WakeVortexCategory.HEAVY),
                                                               self.cat_menu.setText("Heavy"))])
-        self.one_way_menu = self.create_menu_button("Select True or False",
+        self.one_way_menu = self.create_menu_button("False",
                                                ["True", lambda: (self.update_one_way(True),
                                                                  self.one_way_menu.setText("True"))],
                                                ["False", lambda: (self.update_one_way(False),
@@ -269,13 +267,11 @@ class TaxiwayInspector(Inspector):
 
     def reset(self):
         self.twy_name = ""
-        self.twy_speed = 0
+        self.twy_speed = 10
         self.twy_cat = None
-        self.twy_one_way = None
+        self.twy_one_way = False
         self.name_edit.clear()
-        self.speed_edit.clear()
-        self.cat_menu.setText("Select a category")
-        self.one_way_menu.setText("Select True or False")
+        self.speed_edit.setText(str(self.twy_speed))
 
 
 class RunwayInspector(Inspector):

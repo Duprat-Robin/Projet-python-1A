@@ -57,7 +57,7 @@ class GraphicsScale(QtWidgets.QWidget):
         if self.scale_point == 2:
             self.scale_set = False
             self.scale_factor = self.nbr_pixels / self.meters_value
-            self.widget.airport_file.factor = (self.nbr_pixels, self.meters_value, self.scale_factor)
+            self.widget.airport_file.airport.factor = (self.nbr_pixels, self.meters_value, self.scale_factor)
             self.entry_meters.setText("scale factor = {0.nbr_pixels:.3f}/{0.meters_value} = {0.scale_factor:.3f} scene_units/m".format(self))
 
     def enable_scale_set(self):
@@ -67,7 +67,7 @@ class GraphicsScale(QtWidgets.QWidget):
     def setOrigin(self):
         """coordonnées dans scene"""
         self.origin_pos = self.widget.get_coordinates_scene()
-        self.widget.airport_file.origin = self.origin_pos
+        self.widget.airport_file.airport.origin = self.origin_pos
         self.origin_set = False
 
     def enable_origin_set(self):
@@ -155,12 +155,14 @@ class GraphicsWidget(QtWidgets.QWidget):
         self.view.zoom_view(size_screen.height() * RATIO / old_height_screen)
 
     def create_toolbar(self):
-        toolbar = QtWidgets.QHBoxLayout()
+        toolbar = QtWidgets.QVBoxLayout()
+        upper_toolbar = QtWidgets.QHBoxLayout()
+        lower_toolbar = QtWidgets.QHBoxLayout()
 
         def add_button(text, slot):
             button = QtWidgets.QPushButton(text)
             button.clicked.connect(slot)
-            toolbar.addWidget(button)
+            upper_toolbar.addWidget(button)
 
         def add_menu_button(text, *args):
             button = QtWidgets.QPushButton(text)
@@ -168,11 +170,11 @@ class GraphicsWidget(QtWidgets.QWidget):
             for arg in args:
                 menu.addAction(arg[0], arg[1])  # arg[0] = text, arg[1] = lambda function
             button.setMenu(menu)
-            toolbar.addWidget(button)
+            upper_toolbar.addWidget(button)
 
         add_menu_button('File', ['New File', lambda: self.airport_file.newFile()],
-                        ['Open File', lambda: (self.airport_file.openFile(), self.draw_airport_points(),
-                                               self.scale_configuration.open_scale_origin())],
+                        ['Open File', lambda: (self.airport_file.openFile(), self.scale_configuration.open_scale_origin(),
+                                               self.draw_airport_points())],
                         ['Save', lambda: self.airport_file.saveFile()],
                         ['Save As', lambda: self.airport_file.saveAsFile()],
                         ['Open Image', lambda: self.open_image()])
@@ -185,14 +187,28 @@ class GraphicsWidget(QtWidgets.QWidget):
         add_button('Set scale', lambda: (self.cursor_mode_point(),  cursor_set_draw(self),
                                          self.scale_configuration.enable_scale_set()))
         add_button('Set origin', lambda: (self.cursor_mode_point(),  cursor_set_draw(self),
-                                         self.scale_configuration.enable_origin_set()))
+                                          self.scale_configuration.enable_origin_set()))
         add_button('Draw point', lambda: (self.cursor_mode_point(), cursor_set_draw(self)))
         add_button('Draw line', lambda: (self.cursor_mode_line(), cursor_set_draw(self)))
         add_button('Delete', lambda: (self.cursor_deleting_mode(), cursor_set_default(self)))
 
-        toolbar.addWidget(self.scale_configuration.entry_meters)
+        airport_name_label = QtWidgets.QLabel()
+        airport_name_label.setText("Airport's name:")
+        scale_edit_label = QtWidgets.QLabel()
+        scale_edit_label.setText("Scale editor:")
+
+        lower_toolbar.addWidget(scale_edit_label)
+        lower_toolbar.addWidget(self.scale_configuration.entry_meters)
+        lower_toolbar.addWidget(airport_name_label)
+        lower_toolbar.addWidget(self.airport_file.airport.airport_name_edit)
+
         self.scale_configuration.entry_meters.editingFinished.connect(self.scale_configuration.edit_meters)
-        toolbar.addStretch()
+        self.airport_file.airport.airport_name_edit.editingFinished.connect(self.airport_file.airport.update_airport_name)
+
+        upper_toolbar.addStretch()
+        lower_toolbar.addStretch()
+        toolbar.addLayout(upper_toolbar)
+        toolbar.addLayout(lower_toolbar)
 
         def add_shortcut(text, slot):
             """creates an application-wide key binding"""

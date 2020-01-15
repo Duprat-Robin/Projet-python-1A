@@ -3,7 +3,7 @@
 This module allows to load an airport description file
 and to access to all its elements information."""
 
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtWidgets
 import enum
 import geometry
 
@@ -97,6 +97,8 @@ class Airport:
         self.qfu_dict = {r.qfus[i]: r for r in runways for i in range(2)}
         self.items_dict = {}
 
+        self.airport_name_edit = QtWidgets.QLineEdit()
+
         self.origin = origin
         self.factor = factor
 
@@ -111,3 +113,6 @@ class Airport:
 
     def get_qfu(self, name):
         return name if name in self.qfu_dict else None
+
+    def update_airport_name(self):
+        self.name = self.airport_name_edit.text()
