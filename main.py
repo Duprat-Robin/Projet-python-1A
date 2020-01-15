@@ -6,14 +6,16 @@ import airport_inspector, draw
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
-    scene = draw.DrawAirport()
-    inspector = airport_inspector.AirportInspector(scene)
+    draw_scene = draw.DrawAirport()
+    # draw_scene.airport_file.newFile()  # at the opening of the app, we create a new file by default
+
+    inspector = airport_inspector.AirportInspector(draw_scene)
     inspector_dock = QtWidgets.QDockWidget()
     inspector_dock.setWidget(inspector)
 
     window = QtWidgets.QMainWindow()
     window.setWindowTitle("Airport creation")
-    window.setCentralWidget(scene)
+    window.setCentralWidget(draw_scene)
     window.addDockWidget(QtCore.Qt.DockWidgetArea(1), inspector_dock)
     window.showMaximized()
 

@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys, math
-import airport, file_airport, geometry
+import file_airport, geometry
 
 
 ORIGINE_X, ORIGINE_Y = 0, 0
@@ -9,11 +9,6 @@ RATIO = 0.9
 IMAGE_FILE = "lfbo_adc.jpg"
 ARROW, CROSS = 0, 2
 
-
-class MouseSignal(QtCore.QObject):
-    mouse_release_signal = QtCore.pyqtSignal()
-    mouse_move_signal = QtCore.pyqtSignal()
-    # mouse_press_signal = QtCore.pyqtSignal()
 
 class GraphicsZoom(QtWidgets.QGraphicsView):
     """Contrôle le zoom de l'application"""
@@ -24,41 +19,17 @@ class GraphicsZoom(QtWidgets.QGraphicsView):
         # enable drag and drop of the view
         self.setDragMode(self.ScrollHandDrag)
         self.origin_zoom = 0
-        # self.mouse_signal = MouseSignal()
 
     def wheelEvent(self, event):
         """Overrides method in QGraphicsView in order to zoom it when mouse scroll occurs"""
         factor = math.pow(1.001, event.angleDelta().y())
         self.zoom_view(factor)
 
-    # def mouseReleaseEvent(self, event) :
-    #     self.mouse_signal.mouse_release_signal.emit()
-
-    # def mouseMoveEvent(self, event) :
-    #     self.mouse_signal.mouse_move_signal.emit() 
-        
-
     def zoom_view(self, factor):
         """Updates the zoom factor of the view"""
         self.origin_zoom = self.cursor().pos()  # ap zoom av clic
         self.setTransformationAnchor(self.AnchorUnderMouse)
         super().scale(factor, factor)
-
-class Scene(QtWidgets.QGraphicsScene):
-    def __init__(self):
-        super().__init__()
-        self.mouse_signal = MouseSignal()
-
-    # def mousePressEvent(self,event) :
-    #     self.mouse_signal.mouse_press_signal.emit()
-        
-    def mouseReleaseEvent(self, event) :
-        self.mouse_signal.mouse_release_signal.emit()
-
-    def mouseMoveEvent(self, event) :
-        
-        self.mouse_signal.mouse_move_signal.emit() 
-    
 
 
 class GraphicsScale(QtWidgets.QWidget):
@@ -72,7 +43,7 @@ class GraphicsScale(QtWidgets.QWidget):
         self.scale_point = 0
         self.scale_factor = 0  # en pixel/m
         self.start_pos, self.end_pos = 0, 0
-        self.entry_meters = QtWidgets.QLineEdit()
+        self.entry_meters = QtWidgets.QLineEdit("m")
         self.meters_value = 0
         self.nbr_pixels = 0
 
@@ -87,7 +58,7 @@ class GraphicsScale(QtWidgets.QWidget):
         if self.scale_point == 2:
             self.scale_set = False
             self.scale_factor = self.nbr_pixels / self.meters_value
-            self.entry_meters.setText("scale factor = {0.nbr_pixels}/{0.meters_value} = {0.scale_factor} scene_units/m".format(self))
+            self.entry_meters.setText("scale factor = {0.nbr_pixels:.3f}/{0.meters_value} = {0.scale_factor:.3f} scene_units/m".format(self))
 
     def enable_scale_set(self):
         """Enable scale configuration"""
@@ -96,7 +67,6 @@ class GraphicsScale(QtWidgets.QWidget):
     def setOrigin(self):
         """coordonnées dans scene"""
         self.origin_pos = self.widget.get_coordinates_scene()
-        print("c'est", self.origin_pos, "et en metres",self.scene_to_meters(self.origin_pos)) ### Enleve le c'est
         self.origin_set = False
 
     def enable_origin_set(self):
@@ -124,6 +94,13 @@ class GraphicsScale(QtWidgets.QWidget):
         y_meter = (self.origin_pos.y()-qpoint.y())/self.scale_factor
         return QtCore.QPointF(x_meter, y_meter)
 
+    def meters_to_scene(self, qpoint):
+        x_scene = self.origin_pos.x() + qpoint.x()*self.scale_factor
+        y_scene = self.origin_pos.y() - qpoint.y()*self.scale_factor
+        return QtCore.QPointF(x_scene, y_scene)
+
+
+
 class GraphicsWidget(QtWidgets.QWidget):
     """Lead the interface and the toolbar"""
     def __init__(self):
@@ -132,9 +109,9 @@ class GraphicsWidget(QtWidgets.QWidget):
         self.image = QtGui.QPixmap()
         self.image.load(IMAGE_FILE)
         self.setMouseTracking(True)
-        self.airport = file_airport.FileAirport()
+        self.airport_file = file_airport.FileAirport()
 
-        self.scene = Scene()
+        self.scene = QtWidgets.QGraphicsScene()
         self.view = GraphicsZoom(self.scene)
         self.scale_configuration = GraphicsScale(self)
 
@@ -180,10 +157,10 @@ class GraphicsWidget(QtWidgets.QWidget):
             button.setMenu(menu)
             toolbar.addWidget(button)
 
-        add_menu_button('File', ['New File', lambda: self.airport.newFile()],
-                        ['Open File', lambda: self.airport.openFile()],
-                        ['Save', lambda: self.airport.saveFile()],
-                        ['Save As', lambda: self.airport.saveAsFile()])
+        add_menu_button('File', ['New File', lambda: self.airport_file.newFile()],
+                        ['Open File', lambda: (self.airport_file.openFile(), self.draw_airport_points())],
+                        ['Save', lambda: self.airport_file.saveFile()],
+                        ['Save As', lambda: self.airport_file.saveAsFile()])
 
         add_button('-', lambda: self.view.zoom_view(1 / ZOOM_FACTOR))
         add_button('+', lambda: self.view.zoom_view(ZOOM_FACTOR))
