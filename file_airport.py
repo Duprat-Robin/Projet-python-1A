@@ -38,6 +38,8 @@ class FileAirport():
         repository = QtWidgets.QFileDialog()
         self.name = repository.getOpenFileName()
         points, taxiways, runways = [], [], []
+        origin = QtCore.QPointF(0, 0)
+        factor = (1, 1, 1)
         path = self.name[0]
         file = open(path, 'r')
         airport_name = file.readline().split()[0]
@@ -46,6 +48,11 @@ class FileAirport():
             words = line.strip().split()
             name = words[1]
             try:
+                if words[0] == 'O':  # Origin and scale factor description
+                    xy_str = words[1].strip(',')
+                    x, y = float(xy_str[0]), float(xy_str[1])
+                    origin = QtCore.QPointF(x, y)
+                    factor = (words[2], words[3], words[4])
                 if words[0] == 'P':  # Point description
                     pt_type = point_types[int(words[2])]
                     points.append(airport.NamedPoint(name, pt_type, words[3]))
@@ -62,13 +69,15 @@ class FileAirport():
             except Exception as error:
                 print(error, line)
             file.close()
-        self.airport = airport.Airport(airport_name, points, taxiways, runways)
+        self.airport = airport.Airport(airport_name, points, taxiways, runways, origin, factor)
 
     def saveFile(self):
         """Save the file with its current name in its current location"""
         path = self.name[0]
+        lines = []
         with open(path, 'w') as file:
-            lines = [self.airport.name + "\n"]
+            lines.append(self.airport.name + "\n")
+            lines.append("O {0.origin.x()},{0.origin.y()} {0.factor[0]} {0.factor[1]} {0.factor[2]}\n".format(self.airport))
             points = self.airport.points
             taxiways = self.airport.taxiways
             runways = self.airport.runways

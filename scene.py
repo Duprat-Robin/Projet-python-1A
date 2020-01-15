@@ -38,14 +38,14 @@ class GraphicsScale(QtWidgets.QWidget):
         super().__init__(widget)
         self.widget = widget
         self.origin_set = False
-        self.origin_pos = 0
+        self.origin_pos = QtCore.QPointF(0, 0)
         self.scale_set = False
         self.scale_point = 0
-        self.scale_factor = 0  # en pixel/m
+        self.scale_factor = 1
         self.start_pos, self.end_pos = 0, 0
         self.entry_meters = QtWidgets.QLineEdit("m")
-        self.meters_value = 0
-        self.nbr_pixels = 0
+        self.meters_value = 1
+        self.nbr_pixels = 1
 
     def setScale(self):
         """Création de l'échelle: faire en sorte de pouvoir saisir la distance dans un popup menu"""
@@ -58,6 +58,7 @@ class GraphicsScale(QtWidgets.QWidget):
         if self.scale_point == 2:
             self.scale_set = False
             self.scale_factor = self.nbr_pixels / self.meters_value
+            self.widget.airport_file.factor = (self.nbr_pixels, self.meters_value, self.scale_factor)
             self.entry_meters.setText("scale factor = {0.nbr_pixels:.3f}/{0.meters_value} = {0.scale_factor:.3f} scene_units/m".format(self))
 
     def enable_scale_set(self):
@@ -67,6 +68,7 @@ class GraphicsScale(QtWidgets.QWidget):
     def setOrigin(self):
         """coordonnées dans scene"""
         self.origin_pos = self.widget.get_coordinates_scene()
+        self.widget.airport_file.origin = self.origin_pos
         self.origin_set = False
 
     def enable_origin_set(self):
@@ -99,6 +101,10 @@ class GraphicsScale(QtWidgets.QWidget):
         y_scene = self.origin_pos.y() - qpoint.y()*self.scale_factor
         return QtCore.QPointF(x_scene, y_scene)
 
+    def open_scale_origin(self):
+        """"Get scale factor and origin's position from an open file"""
+        self.nbr_pixels, self.meters_value, self.scale_factor = self.widget.airport_file.airport.factor
+        self.origin_pos = self.widget.airport_file.airport.origin
 
 
 class GraphicsWidget(QtWidgets.QWidget):
@@ -158,7 +164,8 @@ class GraphicsWidget(QtWidgets.QWidget):
             toolbar.addWidget(button)
 
         add_menu_button('File', ['New File', lambda: self.airport_file.newFile()],
-                        ['Open File', lambda: (self.airport_file.openFile(), self.draw_airport_points())],
+                        ['Open File', lambda: (self.airport_file.openFile(), self.draw_airport_points(),
+                                               self.scale_configuration.open_scale_origin())],
                         ['Save', lambda: self.airport_file.saveFile()],
                         ['Save As', lambda: self.airport_file.saveAsFile()])
 
@@ -187,6 +194,7 @@ class GraphicsWidget(QtWidgets.QWidget):
         add_shortcut('-', lambda: self.view.zoom_view(1/ZOOM_FACTOR))
         add_shortcut('+', lambda: self.view.zoom_view(ZOOM_FACTOR))
         return toolbar
+
 
 
 def cursor_set_default(widget):

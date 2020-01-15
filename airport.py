@@ -88,7 +88,7 @@ class Airport:
     - taxiways: Line tuple (taxiways)
     - runways: Runway tuple (runways)"""
 
-    def __init__(self, name="", points=[], taxiways=[], runways=[]):
+    def __init__(self, name="", points=[], taxiways=[], runways=[], origin=QtCore.QPointF(0, 0), factor=(1,1,1)):
         self.name = name
         self.points = points
         self.taxiways = taxiways
@@ -96,6 +96,9 @@ class Airport:
         self.pt_dict = {p.name: p for p in points}
         self.qfu_dict = {r.qfus[i]: r for r in runways for i in range(2)}
         self.items_dict = {}
+
+        self.origin = origin
+        self.factor = factor
 
     def __repr__(self):
         return "<airport.Airport {0}>".format(self.name)

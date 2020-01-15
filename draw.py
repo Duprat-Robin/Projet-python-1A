@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys, enum
-import scene, file_airport
+import scene
 
 
 POINT_Z_VALUE = 1
@@ -122,26 +122,30 @@ class DrawAirport(scene.GraphicsWidget):
 
         # NamedPoint
         for point in apt.points:
-            ellipse = self.draw_point_coord(point.x, point.y, width, color)
-            self.airport_items_dict[ellipse] = QtCore.QPointF(point.x, point.y)
+            pointF = self.scale_configuration.meters_to_scene(QtCore.QPointF(point.x, point.y))
+            x, y = pointF.x(), pointF.y()
+            ellipse = self.draw_point_coord(x, y, width, color)
+            self.airport_items_dict[ellipse] = QtCore.QPointF(x, y)
 
         # Taxiway
         for taxiway in apt.taxiways:
             line_point_list = []
             path = QtGui.QPainterPath()
-            x, y = taxiway.coords[0].x, taxiway.coords[0].y
+            pointF = self.scale_configuration.meters_to_scene(QtCore.QPointF(taxiway.coords[0].x, taxiway.coords[0].y))
+            x, y = pointF.x(), pointF.y()
             path.moveTo(x, y)
             ellipse = self.draw_point_coord(x, y, width, color)
-            pointF = QtCore.QPointF(x, y)
             line_point_list.append((ellipse, pointF))
             self.airport_items_dict[ellipse] = pointF
+
             for point in taxiway.coords[1:]:
-                x, y = point.x, point.y
-                pointF = QtCore.QPointF(x, y)
+                pointF = self.scale_configuration.meters_to_scene(QtCore.QPointF(point.x, point.y))
+                x, y = pointF.x(), pointF.y()
                 path.lineTo(x, y)
                 ellipse = self.draw_point_coord(x, y, width, color)
                 line_point_list.append((ellipse, pointF))
                 self.airport_items_dict[ellipse] = pointF
+
             line = QtWidgets.QGraphicsPathItem(path)
             setHighlight(line, self)
             self.scene.addItem(line)
@@ -151,18 +155,22 @@ class DrawAirport(scene.GraphicsWidget):
         for runway in apt.runways:
             line_point_list = []
             path = QtGui.QPainterPath()
-            x_start, y_start = runway.coords[0].x, runway.coords[0].y
-            x_end, y_end = runway.coords[1].x, runway.coords[1].y
+
+            pointF_start = self.scale_configuration.meters_to_scene(QtCore.QPointF(runway.coords[0].x, runway.coords[0].y))
+            pointF_end = self.scale_configuration.meters_to_scene(QtCore.QPointF(runway.coords[1].x, runway.coords[1].y))
+            x_start, y_start = pointF_start.x(), pointF_start.y()
+            x_end, y_end = pointF_end.x(), pointF_end.y()
+
             path.moveTo(x_start, y_start)
             ellipse_start = self.draw_point_coord(x_start, y_start, width, color)
             ellipse_end = self.draw_point_coord(x_end, y_end, width, color)
-            pointF_start = QtCore.QPointF(x_start, y_start)
-            pointF_end = QtCore.QPointF(x_end, y_end)
             path.lineTo(x_end, y_end)
+
             line_point_list.append((ellipse_start, pointF_start))
             line_point_list.append((ellipse_end, pointF_end))
             self.airport_items_dict[ellipse_start] = pointF_start
             self.airport_items_dict[ellipse_end] = pointF_end
+
             line = QtWidgets.QGraphicsPathItem(path)
             setHighlight(line, self)
             self.scene.addItem(line)
