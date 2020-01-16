@@ -110,9 +110,11 @@ class AirportInspector(QtWidgets.QWidget):
 
         elif self.taxiway_widget.isVisible():
             self.taxiway_widget.twy_name = self.taxiway_widget.name_edit.text()
+
             self.taxiway_widget.twy_speed = int(self.taxiway_widget.speed_edit.text())
             coord_str = file_airport.tuple_to_str(self.list_coordinates)
             coord = file_airport.xys_to_points(coord_str.split())
+
             taxiway = airport.Taxiway(self.taxiway_widget.twy_name, self.taxiway_widget.twy_speed,
                                       self.taxiway_widget.twy_cat, self.taxiway_widget.twy_one_way, coord)
             self.draw.airport_file.airport.taxiways.append(taxiway)

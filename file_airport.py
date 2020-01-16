@@ -26,6 +26,7 @@ class FileAirport():
         self.image_signal = ImageSignal()
         self.image_repository = ""
 
+
     def newFile(self):
         """Thanks to naming, we can create an infinity of files without Saving then under an other name
         But, the default repository is the folder of the software"""
@@ -46,6 +47,7 @@ class FileAirport():
         points, taxiways, runways = [], [], []
         origin = QtCore.QPointF(0, 0)
         factor = (1, 1, 1)
+
         path = self.name[0]
         file = open(path, 'r')
         airport_name = file.readline().split()[0]
@@ -79,6 +81,7 @@ class FileAirport():
                 print(error, line)
             file.close()
         self.airport = airport.Airport(airport_name, points, taxiways, runways, origin, factor)
+
 
     def saveFile(self):
         """Save the file with its current name in its current location"""

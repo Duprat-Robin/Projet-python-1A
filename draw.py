@@ -1,11 +1,6 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
-import sys, enum
+import enum
 import scene
-
-
-POINT_Z_VALUE = 1
-WAY_Z_VALUE = 0
-AIRPORT_FILE = ""
 
 
 class Mode(enum.Enum):
@@ -32,20 +27,40 @@ class DrawAirport(scene.GraphicsWidget):
         self.clicked_item = None  # None | Last clicked item
         self.highlighted_item = None  # None | Highlighted item when was a clicked_item
         self.signal = InspectorSignal()
+        self.last_drawn_point = None
+        self.point_to_line_dict = {}
 
     def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.RightButton and self.cursor_mode == Mode.DEFAULT and self.highlighted_item != None and (self.current_item == None or not (type(self.current_item) is QtWidgets.QGraphicsEllipseItem)):
+            removed_item = self.highlighted_item
+            self.airport_items_dict.pop(removed_item)
+            self.scene.removeItem(self.highlighted_item)
+            self.draw_point()
+            self.current_item,self.clicked_item,self.highlighted_item = self.last_drawn_point,self.last_drawn_point,self.last_drawn_point
+            self.on_item == True
+            highlight(self.highlighted_item,self)
+            if removed_item in self.point_to_line_dict :
+                line = self.point_to_line_dict[removed_item]
+                self.point_to_line_dict.pop(removed_item)
+                self.line_point_list = self.airport_items_dict[line[0]]
+                self.line_point_list[line[1]] = (self.last_drawn_point,self.airport_items_dict[self.last_drawn_point])
+                self.scene.removeItem(line[0])
+                self.airport_items_dict.pop(line[0])
+                self.draw_line()
+                self.line_point_list = []
         if self.cursor_mode == Mode.DRAW_POINT or self.cursor_mode == Mode.DRAW_LINE :
             self.draw_point()
         if self.cursor_mode == Mode.DELETE:
             self.delete()
-        if self.cursor_mode == Mode.DEFAULT:
+        if self.cursor_mode == Mode.DEFAULT and event.button() == QtCore.Qt.LeftButton :
             if self.on_item:
                 self.clicked_item = self.current_item
                 if self.highlighted_item is not None and self.clicked_item is not self.highlighted_item:
                     unhighlight(self.highlighted_item, self)
                     self.highlighted_item = None
-                highlight(self.clicked_item, self)
-                self.highlighted_item = self.clicked_item
+                if self.clicked_item != self.highlighted_item :
+                    highlight(self.clicked_item, self)
+                    self.highlighted_item = self.clicked_item
                 self.signal.ask_inspection_signal.emit()
             elif self.highlighted_item is not None:
                 unhighlight(self.highlighted_item, self)
@@ -76,10 +91,12 @@ class DrawAirport(scene.GraphicsWidget):
         ellipse.setBrush(QtGui.QBrush(color))
         setHighlight(ellipse, self)
         self.scene.addItem(ellipse)
+        ellipse.setZValue(1)
         return ellipse
 
     def draw_point(self):
-        if not self.on_item:
+        if self.current_item is None or not (type(self.current_item) is QtWidgets.QGraphicsEllipseItem) :
+
             width = 20
             color = QtGui.QColor(255, 0, 0)
             if self.scale_configuration.scale_set:
@@ -90,30 +107,56 @@ class DrawAirport(scene.GraphicsWidget):
                 self.scale_configuration.setOrigin()
             pos_cursor_scene = self.get_coordinates_scene()  # ??? scale configuration
             point = self.draw_point_coord(pos_cursor_scene.x(), pos_cursor_scene.y(), width, color)
+            point.setZValue(1)
             self.airport_items_dict[point] = pos_cursor_scene
+            self.last_drawn_point = point
             if self.cursor_mode == Mode.DRAW_LINE:
                 self.line_point_list.append((point, pos_cursor_scene))
-        if self.on_item:
+        elif self.cursor_mode == Mode.DRAW_LINE:
             self.line_point_list.append((self.current_item, self.airport_items_dict[self.current_item]))
         # print("test", pos_cursor_scene, self.scale_configuration.meters_to_scene(self.scale_configuration.scene_to_meters(pos_cursor_scene)))
 
     def draw_line(self):
-        width = 10
-        color = QtGui.QColor(0, 255, 0)
         path = QtGui.QPainterPath()
         path.moveTo(self.line_point_list[0][1].x(), self.line_point_list[0][1].y())
         for point in self.line_point_list[1:]:
             path.lineTo(point[1].x(), point[1].y())
         line = QtWidgets.QGraphicsPathItem(path)
+        line.setZValue(0)
         setHighlight(line, self)
         self.scene.addItem(line)
         self.airport_items_dict[line] = self.line_point_list
+        i = 0
+        for point in self.line_point_list:
+            self.point_to_line_dict[point[0]] = (line,i)
+            i += 1
 
-        # line.setPen(pen)
 
     def delete(self):
-        self.scene.removeItem(self.current_item)
+        if not self.current_item is None :
+            if self.current_item in self.point_to_line_dict :
+                line = self.point_to_line_dict[self.current_item]
+                self.line_point_list = self.airport_items_dict[line[0]]
+                length_list = len(self.line_point_list)
+                if length_list >= 3 :
+                    self.line_point_list.pop(line[1])
+                    self.scene.removeItem(line[0])
+                    self.airport_items_dict.pop(line[0])
+                    self.draw_line()
+                    self.point_to_line_dict.pop(self.current_item)
+                elif length_list == 2 :
+                    self.scene.removeItem(line[0])
+                    for point in self.airport_items_dict[line[0]]:
+                        self.point_to_line_dict.pop(point[0])
+                    self.airport_items_dict.pop(line[0])
+                self.line_point_list = []
+            if type(self.current_item) is QtWidgets.QGraphicsPathItem :
+                for point in self.airport_items_dict[self.current_item] :
+                    self.point_to_line_dict.pop(point[0])
+            self.scene.removeItem(self.current_item)
+            self.airport_items_dict.pop(self.current_item)
         self.on_item = False
+        self.current_item = None
 
     def draw_airport_points(self):
         apt = self.airport_file.airport
@@ -145,10 +188,14 @@ class DrawAirport(scene.GraphicsWidget):
                 ellipse = self.draw_point_coord(x, y, width, color)
                 line_point_list.append((ellipse, pointF))
                 self.airport_items_dict[ellipse] = pointF
-
             line = QtWidgets.QGraphicsPathItem(path)
             setHighlight(line, self)
             self.scene.addItem(line)
+            line.setZValue(0)
+            i = 0
+            for point in line_point_list:
+                self.point_to_line_dict[point[0]] = (line,i)
+                i += 1
             self.airport_items_dict[line] = line_point_list
 
         # Runway
@@ -170,10 +217,13 @@ class DrawAirport(scene.GraphicsWidget):
             line_point_list.append((ellipse_end, pointF_end))
             self.airport_items_dict[ellipse_start] = pointF_start
             self.airport_items_dict[ellipse_end] = pointF_end
-
             line = QtWidgets.QGraphicsPathItem(path)
             setHighlight(line, self)
+            line.setZValue(0)
+            
             self.scene.addItem(line)
+            self.point_to_line_dict[ellipse_start] = (line,0)
+            self.point_to_line_dict[ellipse_end] = (line,1)
             self.airport_items_dict[line] = line_point_list
 
 

@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
-import sys, math
+import math
 import file_airport, geometry
 
 
@@ -45,6 +45,7 @@ class GraphicsScale(QtWidgets.QWidget):
         self.entry_meters = QtWidgets.QLineEdit("m")
         self.meters_value = 1
         self.nbr_pixels = 1
+
 
     def setScale(self):
         """Création de l'échelle: faire en sorte de pouvoir saisir la distance dans un popup menu"""
@@ -194,6 +195,7 @@ class GraphicsWidget(QtWidgets.QWidget):
                                          self.scale_configuration.enable_scale_set()))
         add_button('Set origin', lambda: (self.cursor_mode_point(),  cursor_set_draw(self),
                                           self.scale_configuration.enable_origin_set()))
+
         add_button('Draw point', lambda: (self.cursor_mode_point(), cursor_set_draw(self)))
         add_button('Draw line', lambda: (self.cursor_mode_line(), cursor_set_draw(self)))
         add_button('Delete', lambda: (self.cursor_deleting_mode(), cursor_set_default(self)))
