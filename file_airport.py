@@ -14,11 +14,17 @@ categories = {'L': airport.WakeVortexCategory.LIGHT,
 point_types = [airport.PointType.STAND, airport.PointType.DEICING, airport.PointType.RUNWAY_POINT]
 
 
+class ImageSignal(QtCore.QObject):
+    ask_image_signal = QtCore.pyqtSignal(str)
+
+
 class FileAirport():
 
     def __init__(self):
         self.name = ""
         self.airport = airport.Airport()  # airport.Airport()
+        self.image_signal = ImageSignal()
+        self.image_repository = ""
 
     def newFile(self):
         """Thanks to naming, we can create an infinity of files without Saving then under an other name
@@ -48,6 +54,9 @@ class FileAirport():
             words = line.strip().split()
             name = words[1]
             try:
+                if words[0] == 'I':  # Image description
+                    self.image_repository = words[1]
+                    self.image_signal.ask_image_signal.emit(self.image_repository)
                 if words[0] == 'O':  # Origin and scale factor description
                     xy_str = words[1].split(',')
                     x, y = float(xy_str[0]), float(xy_str[1])
@@ -77,6 +86,7 @@ class FileAirport():
         lines = []
         with open(path, 'w') as file:
             lines.append(self.airport.name + "\n")
+            lines.append("I {0}\n".format(self.image_repository))
             lines.append("O {0},{1} {2[0]} {2[1]} {2[2]}\n".format(self.airport.origin.x(), self.airport.origin.y(),
                                                                    self.airport.factor))
             points = self.airport.points
@@ -101,14 +111,13 @@ class FileAirport():
                     one_way = 'S'
                 else:
                     one_way = 'D'
-                coords_str = tuple_to_str(taxiway.coords)
+                coords_str = tuple_to_str([(i.x, i.y) for i in taxiway.coords])
                 lines.append("L {0.name} {0.speed} {1} {2}".format(taxiway, cat, one_way))
                 lines[-1] = " ".join([lines[-1], coords_str, "\n"])
             for runway in runways:
-                points_str = tuple_to_str(runway.named_points)
-                ends_str = tuple_to_str(runway.coords)
+                ends_str = tuple_to_str([(i.x, i.y) for i in runway.coords])
                 lines.append("R {0.name} {0.qfus[0]} {0.qfus[1]} ".format(runway))
-                lines[-1] = " ".join([lines[-1], points_str, ends_str, "\n"])
+                lines[-1] = " ".join([lines[-1], runway.named_points, ends_str, "\n"])
             file.writelines(lines)
 
     def saveAsFile(self):
@@ -121,7 +130,7 @@ class FileAirport():
 
 
 def tuple_to_str(coords):
-    return " ".join((str(i).strip('()') for i in coords))
+    return " ".join(("{0[0]},{0[1]}".format(i) for i in coords))
 
 
 def xys_to_points(str_xy_list):

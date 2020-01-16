@@ -132,6 +132,8 @@ class GraphicsWidget(QtWidgets.QWidget):
         self.resize(size_screen.width(), size_screen.height())
         self.view.zoom_view(size_screen.height() * RATIO / old_height_screen)
 
+        self.airport_file.image_signal.ask_image_signal.connect(self.open_repository_image)
+
         self.showMaximized()
 
     def get_coordinates_scene(self):
@@ -145,7 +147,11 @@ class GraphicsWidget(QtWidgets.QWidget):
 
     def open_image(self):
         repository = QtWidgets.QFileDialog()
-        self.image.load(str(repository.getOpenFileName()[0]))
+        self.airport_file.image_repository = str(repository.getOpenFileName()[0])
+        self.open_repository_image(self.airport_file.image_repository)
+
+    def open_repository_image(self, repository):
+        self.image.load(repository)
         self.scene.addPixmap(self.image)
 
         screen = QtWidgets.QDesktopWidget()

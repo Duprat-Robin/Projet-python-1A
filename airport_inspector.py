@@ -1,6 +1,6 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 import enum
-import airport, file_airport, manual
+import airport, file_airport, geometry, manual
 
 INSPECTOR_WIDTH = 270
 
@@ -110,19 +110,18 @@ class AirportInspector(QtWidgets.QWidget):
 
         elif self.taxiway_widget.isVisible():
             self.taxiway_widget.twy_name = self.taxiway_widget.name_edit.text()
-            self.taxiway_widget.twy_speed = float(self.taxiway_widget.speed_edit.text())
+            self.taxiway_widget.twy_speed = int(self.taxiway_widget.speed_edit.text())
             coord_str = file_airport.tuple_to_str(self.list_coordinates)
-            coord = file_airport.xys_to_points(coord_str)
+            coord = file_airport.xys_to_points(coord_str.split())
             taxiway = airport.Taxiway(self.taxiway_widget.twy_name, self.taxiway_widget.twy_speed,
                                       self.taxiway_widget.twy_cat, self.taxiway_widget.twy_one_way, coord)
             self.draw.airport_file.airport.taxiways.append(taxiway)
             self.taxiway_widget.reset()
         elif self.runway_widget.isVisible():
             self.runway_widget.rwy_name = self.runway_widget.name_edit.text()
-            self.runway_widget.rwy_qfus = self.runway_widget.qfus_edit.text().split()
+            self.runway_widget.rwy_qfus = self.runway_widget.qfus_edit.text().split('-')
             self.runway_widget.rwy_named_point = self.runway_widget.named_points_edit.text()
-            ends_str = file_airport.tuple_to_str(self.list_coordinates)
-            ends = file_airport.xys_to_points(ends_str)
+            ends = tuple(geometry.Point(i[0], i[1]) for i in self.list_coordinates)
             runway = airport.Runway(self.runway_widget.rwy_name, self.runway_widget.rwy_qfus[0],
                                     self.runway_widget.rwy_qfus[1], ends, self.runway_widget.rwy_named_point)
             self.draw.airport_file.airport.runways.append(runway)
