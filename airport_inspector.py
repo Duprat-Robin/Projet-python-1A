@@ -1,8 +1,17 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 import enum
-import airport, file_airport, manual
+import airport, file_airport, geometry, manual
+from draw import LineType
 
 INSPECTOR_WIDTH = 270
+
+categories = {airport.WakeVortexCategory.LIGHT: "Light",
+              airport.WakeVortexCategory.MEDIUM: "Medium",
+              airport.WakeVortexCategory.HEAVY: "Heavy"}
+
+points_type = {airport.PointType.STAND: "Stand",
+               airport.PointType.DEICING: "Deicing",
+               airport.PointType.RUNWAY_POINT: "Runway"}
 
 
 class Box(enum.Enum):
@@ -21,7 +30,7 @@ class AirportInspector(QtWidgets.QWidget):
 
         self.root_layout = QtWidgets.QVBoxLayout(self)
         self.root_layout.addLayout(toolbar_layout)
-        self.root_layout.addWidget(self.named_point_widget)  # first start is on NamedPointInspector
+        self.root_layout.addWidget(self.named_point_widget)  # first start is with NamedPointInspector
         self.named_point_widget.setVisible(True)
         self.taxiway_widget.setVisible(False)
         self.runway_widget.setVisible(False)
@@ -29,6 +38,7 @@ class AirportInspector(QtWidgets.QWidget):
         self.root_layout.addWidget(manual_disp)
 
         self.draw = the_draw
+        self.item_dict = self.draw.airport_items_dict
         self.list_coordinates = []
         self.draw.signal.ask_inspection_signal.connect(self.emit_signal)
         self.show()
@@ -50,34 +60,53 @@ class AirportInspector(QtWidgets.QWidget):
             toolbar.addWidget(button)
             return button
 
-        menu_object = add_menu_button('Select an object',
+        menu_object = add_menu_button('Named point data',
                                       ['Named point data', lambda: (self.update_widget(self.named_point_widget),
                                                                     menu_object.setText("Named point selected"))],
                                       ['Taxiway data', lambda: (self.update_widget(self.taxiway_widget),
                                                                 menu_object.setText("Taxiway selected"))],
                                       ['Runway data', lambda: (self.update_widget(self.runway_widget),
                                                                menu_object.setText("Runway selected"))])
-        add_button('Check', lambda: self.valid_data())
+        add_button('OK', lambda: self.valid_data())
         toolbar.addStretch()
         return toolbar
 
     def emit_signal(self):
-        item = self.draw.highlighted_item
-        self.list_coordinates = []
-        if type(item) is QtWidgets.QGraphicsEllipseItem:
-            coordinates = (self.draw.airport_items_dict[item].x(), self.draw.airport_items_dict[item].y())
-            self.list_coordinates.append(coordinates)
-            self.named_point_widget.label_dic['coord_display'].setText("({0[0]:.0f}, {0[1]:.0f})".format(coordinates))
-        else:
-            list_coordinates_str = []
-            for elmt in self.draw.airport_items_dict[item]:
-                coordinates = (elmt[1].x(), elmt[1].y())  # faire la convertion d'unité
-                self.list_coordinates.append(coordinates)
-                list_coordinates_str.append("({0[0]:.0f}, {0[1]:.0f})".format(coordinates))
-            if self.taxiway_widget.isVisible():
-                self.taxiway_widget.label_dic['coord_display'].setText("\n".join(list_coordinates_str))
+        try:
+            ellipse_item = self.draw.highlighted_item
+            item = self.item_dict[ellipse_item]
+            self.list_coordinates = []
+            if type(ellipse_item) is QtWidgets.QGraphicsEllipseItem:
+                coordinates = item.coordinates
+                coordinates_meters = self.draw.scale_configuration.scene_to_meters(coordinates)
+                self.list_coordinates.append((int(coordinates_meters.x()), int(coordinates_meters.y())))
+                self.named_point_widget.label_dic['coord_display'].setText("({0:.0f}, {1:.0f})".format(coordinates_meters.x(), coordinates_meters.y()))
+                if item.saved:
+                    self.named_point_widget.name_edit.setText(item.point.name)
+                    self.named_point_widget.type_menu.setText(str(points_type[item.point.type]))
             else:
-                self.runway_widget.label_dic['coord_display'].setText("\n".join(list_coordinates_str))
+                list_coordinates_str = []
+                for elmt in item.list_coordinates:
+                    coordinates_meters = self.draw.scale_configuration.scene_to_meters(elmt[1])
+                    self.list_coordinates.append((int(coordinates_meters.x()), int(coordinates_meters.y())))
+                    list_coordinates_str.append("({0:.0f}, {1:.0f})".format(coordinates_meters.x(), coordinates_meters.y()))
+                if self.taxiway_widget.isVisible():
+                    self.taxiway_widget.label_dic['coord_display'].setText("\n".join(list_coordinates_str))
+                    if item.saved and item.type == LineType.TAXIWAY:
+                        self.taxiway_widget.name_edit.setText(item.line.name)
+                        self.taxiway_widget.speed_edit.setText(str(item.line.speed))
+                        self.taxiway_widget.cat_menu.setText(categories[item.line.cat])
+                        self.taxiway_widget.one_way_menu.setText(str(item.line.one_way))
+                else:
+                    self.runway_widget.label_dic['coord_display'].setText("\n".join(list_coordinates_str))
+                    if item.saved and item.type == LineType.RUNWAY:
+                        self.runway_widget.name_edit.setText(item.line.name)
+                        self.runway_widget.qfus_edit.setText(item.line.name)
+                        self.runway_widget.named_points_edit.setText(" ".join(item.line.named_points))
+        except Exception:
+            self.named_point_widget.reset()
+            self.taxiway_widget.reset()
+            self.runway_widget.reset()
 
     def update_widget(self, new_widget):
         replace = False
@@ -102,39 +131,71 @@ class AirportInspector(QtWidgets.QWidget):
         if self.named_point_widget.isVisible():
             self.named_point_widget.pt_name = self.named_point_widget.name_edit.text()
             point = "{0[0]},{0[1]}".format(self.list_coordinates[0])
-            named_point = airport.NamedPoint(self.named_point_widget.pt_name, self.named_point_widget.pt_type, point)
-            self.draw.airport_file.airport.points.append(named_point)
-            self.draw.airport_file.airport.pt_dict[named_point.name] = named_point
+            item = self.item_dict[self.draw.highlighted_item]
+            if not item.saved:
+                named_point = airport.NamedPoint(self.named_point_widget.pt_name, self.named_point_widget.pt_type,
+                                                 point)
+                item.saved = True
+                item.point = named_point
+                self.draw.airport_file.airport.points.append(named_point)
+                self.draw.airport_file.airport.pt_dict[named_point.name] = named_point
+                item.line = named_point
+            else:
+                old_name = item.point.name
+                item.point.name = self.named_point_widget.pt_name
+                item.point.type = self.named_point_widget.pt_type
+                self.draw.airport_items_dict.pt_dict.pop(old_name)
+                self.draw.airport_items_dict[item.point.name] = item.point
             self.named_point_widget.reset()
 
         elif self.taxiway_widget.isVisible():
             self.taxiway_widget.twy_name = self.taxiway_widget.name_edit.text()
-            self.taxiway_widget.twy_speed = float(self.taxiway_widget.speed_edit.text())
+
+            self.taxiway_widget.twy_speed = int(self.taxiway_widget.speed_edit.text())
             coord_str = file_airport.tuple_to_str(self.list_coordinates)
-            coord = file_airport.xys_to_points(coord_str)
-            taxiway = airport.Taxiway(self.taxiway_widget.twy_name, self.taxiway_widget.twy_speed,
-                                      self.taxiway_widget.twy_cat, self.taxiway_widget.twy_one_way, coord)
-            self.draw.airport_file.airport.taxiways.append(taxiway)
+            coord = file_airport.xys_to_points(coord_str.split())
+            item = self.item_dict[self.draw.highlighted_item]
+            if not item.saved:
+                taxiway = airport.Taxiway(self.taxiway_widget.twy_name, self.taxiway_widget.twy_speed,
+                                          self.taxiway_widget.twy_cat, self.taxiway_widget.twy_one_way, coord)
+                item.line = taxiway
+                item.saved = True
+                self.draw.airport_file.airport.taxiways.append(taxiway)
+            else:
+                item.line.name = self.taxiway_widget.twy_name
+                item.line.speed = self.taxiway_widget.twy_speed
+                item.line.cat = self.taxiway_widget.twy_cat
+                item.line.one_way = self.taxiway_widget.twy_one_way
             self.taxiway_widget.reset()
         elif self.runway_widget.isVisible():
             self.runway_widget.rwy_name = self.runway_widget.name_edit.text()
-            self.runway_widget.rwy_qfus = self.runway_widget.qfus_edit.text().split()
+            self.runway_widget.rwy_qfus = self.runway_widget.qfus_edit.text().split('-')
             self.runway_widget.rwy_named_point = self.runway_widget.named_points_edit.text()
-            ends_str = file_airport.tuple_to_str(self.list_coordinates)
-            ends = file_airport.xys_to_points(ends_str)
-            runway = airport.Runway(self.runway_widget.rwy_name, self.runway_widget.rwy_qfus[0],
-                                    self.runway_widget.rwy_qfus[1], ends, self.runway_widget.rwy_named_point)
-            self.draw.airport_file.airport.runways.append(runway)
-            self.draw.airport_file.airport.qfu_dict[runway.qfus[0]] = runway
-            self.draw.airport_file.airport.qfu_dict[runway.qfus[1]] = runway
+            ends = tuple(geometry.Point(i[0], i[1]) for i in self.list_coordinates)
+
+            item = self.item_dict[self.draw.highlighted_item]
+            if not item.saved:
+                runway = airport.Runway(self.runway_widget.rwy_name, self.runway_widget.rwy_qfus[0],
+                                        self.runway_widget.rwy_qfus[1], ends, self.runway_widget.rwy_named_point)
+                item.line = runway
+                item.saved = True
+                self.draw.airport_file.airport.runways.append(runway)
+                self.draw.airport_file.airport.qfu_dict[runway.qfus[0]] = runway
+                self.draw.airport_file.airport.qfu_dict[runway.qfus[1]] = runway
+            else:
+                old_qfus = item.line.qfus
+                item.line.name = self.runway_widget.rwy_name
+                item.line.qfus = self.runway_widget.rwy_qfus
+                item.line.named_points = self.runway_widget.rwy_named_point
+                self.draw.airport_file.qfu_dict.pop(old_qfus)
+                self.draw.airport_file.qfu_dict[item.line.qfus[0]] = item.line
+                self.draw.airport_file.qfu_dict[item.line.qfus[1]] = item.line
             self.runway_widget.reset()
 
 
 class Inspector(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-        #self.setMinimumWidth(INSPECTOR_WIDTH)
-        #self.setMaximumWidth(INSPECTOR_WIDTH)
         self.setFixedWidth(INSPECTOR_WIDTH)  # Inspector's Width is fixed
 
     def create_label(self, *args):
@@ -195,7 +256,7 @@ class NamedPointInspector(Inspector):
                                       ['coord_label', "Point's coordinates"],
                                       ['coord_display', ""])
         self.name_edit = self.create_line_edit()
-        self.type_menu = self.create_menu_button("Select a type",
+        self.type_menu = self.create_menu_button("Stand",
                                             ["Stand", lambda: (self.set_point_type(airport.PointType.STAND),
                                                                self.type_menu.setText("Stand"))],
                                             ["Deicing", lambda: (self.set_point_type(airport.PointType.DEICING),
@@ -217,17 +278,17 @@ class NamedPointInspector(Inspector):
     def reset(self):
         self.pt_name = ""
         self.pt_type = None
+        self.label_dic['coord_display'].setText("")
         self.name_edit.clear()
-        self.type_menu.setText("Select a type")
 
 
 class TaxiwayInspector(Inspector):
     def __init__(self):
         super().__init__()
         self.twy_name = ""
-        self.twy_speed = 0
+        self.twy_speed = 10
         self.twy_cat = None  # None | WakeVortexCategory
-        self.twy_one_way = None  # None | bool
+        self.twy_one_way = False
 
         self.label_dic = self.create_label(['name_label', "Name"],
                                       ['speed_label', "Speed"],
@@ -237,14 +298,15 @@ class TaxiwayInspector(Inspector):
                                       ['coord_display', ""])
         self.name_edit = self.create_line_edit()
         self.speed_edit = self.create_line_edit()
-        self.cat_menu = self.create_menu_button("Select a category",
+        self.speed_edit.setText(str(self.twy_speed))
+        self.cat_menu = self.create_menu_button("Medium",
                                            ["Light", lambda: (self.update_cat(airport.WakeVortexCategory.LIGHT),
                                                               self.cat_menu.setText("Light"))],
                                            ["Medium", lambda: (self.update_cat(airport.WakeVortexCategory.MEDIUM),
                                                                self.cat_menu.setText("Medium"))],
                                            ["Heavy", lambda: (self.update_cat(airport.WakeVortexCategory.HEAVY),
                                                               self.cat_menu.setText("Heavy"))])
-        self.one_way_menu = self.create_menu_button("Select True or False",
+        self.one_way_menu = self.create_menu_button("False",
                                                ["True", lambda: (self.update_one_way(True),
                                                                  self.one_way_menu.setText("True"))],
                                                ["False", lambda: (self.update_one_way(False),
@@ -268,21 +330,20 @@ class TaxiwayInspector(Inspector):
 
     def reset(self):
         self.twy_name = ""
-        self.twy_speed = 0
+        self.twy_speed = 10
         self.twy_cat = None
-        self.twy_one_way = None
+        self.twy_one_way = False
+        self.label_dic['coord_display'].setText("")
         self.name_edit.clear()
-        self.speed_edit.clear()
-        self.cat_menu.setText("Select a category")
-        self.one_way_menu.setText("Select True or False")
+        self.speed_edit.setText(str(self.twy_speed))
 
 
 class RunwayInspector(Inspector):
     def __init__(self):
         super().__init__()
         self.rwy_name = ""
-        self.rwy_qfus = ""  # type à vérifier
-        self.rwy_named_point = ""  # type à vérifier
+        self.rwy_qfus = ""
+        self.rwy_named_point = ""
 
         self.label_dic = self.create_label(['name_label', "Name"],
                                       ['qfus_label', "Runway's QFUs"],
@@ -306,6 +367,7 @@ class RunwayInspector(Inspector):
         self.rwy_name = ""
         self.rwy_qfus = ""
         self.rwy_named_point = ""
+        self.label_dic['coord_display'].setText("")
         self.name_edit.clear()
         self.qfus_edit.clear()
         self.named_points_edit.clear()
