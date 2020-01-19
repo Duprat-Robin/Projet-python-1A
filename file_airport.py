@@ -26,7 +26,6 @@ class FileAirport():
         self.image_signal = ImageSignal()
         self.image_repository = ""
 
-
     def newFile(self):
         """Thanks to naming, we can create an infinity of files without Saving then under an other name
         But, the default repository is the folder of the software"""
@@ -82,7 +81,6 @@ class FileAirport():
             file.close()
         self.airport = airport.Airport(airport_name, points, taxiways, runways, origin, factor)
 
-
     def saveFile(self):
         """Save the file with its current name in its current location"""
         path = self.name[0]
@@ -120,13 +118,16 @@ class FileAirport():
             for runway in runways:
                 ends_str = tuple_to_str([(i.x, i.y) for i in runway.coords])
                 lines.append("R {0.name} {0.qfus[0]} {0.qfus[1]} ".format(runway))
-                lines[-1] = " ".join([lines[-1], runway.named_points, ends_str, "\n"])
+                lines[-1] = " ".join([lines[-1], ",".join(runway.named_points), ends_str, "\n"])
             file.writelines(lines)
 
     def saveAsFile(self):
         """Save the file with the name chosen by the user in the folder chose in the file explorer of the computer"""
-        if self.name[0][:8] == "untitled":
-            os.remove(self.name[0])
+        try:
+            if self.name[0][:8] == "untitled":
+                os.remove(self.name[0])
+        except Exception:
+            pass
         repository = QtWidgets.QFileDialog()
         self.name = repository.getSaveFileName()
         self.saveFile()
