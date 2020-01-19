@@ -116,3 +116,6 @@ class Airport:
 
     def update_airport_name(self):
         self.name = self.airport_name_edit.text()
+
+    def display_name(self):
+        self.airport_name_edit.setText(self.name)

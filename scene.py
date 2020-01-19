@@ -26,7 +26,7 @@ class GraphicsZoom(QtWidgets.QGraphicsView):
 
     def zoom_view(self, factor):
         """Updates the zoom factor of the view"""
-        self.origin_zoom = self.cursor().pos()  # ap zoom av clic
+        self.origin_zoom = self.cursor().pos()
         self.setTransformationAnchor(self.AnchorUnderMouse)
         super().scale(factor, factor)
 
@@ -88,7 +88,7 @@ class GraphicsScale(QtWidgets.QWidget):
         return current_cursor_pos_map
 
     def edit_meters(self):
-        self.meters_value = float(self.entry_meters.text()[:-1])  # suppresion de l'unité
+        self.meters_value = float(self.entry_meters.text()[:-1])
         self.entry_meters.clearFocus()
 
     def scene_to_meters(self, qpoint):
@@ -120,10 +120,10 @@ class GraphicsWidget(QtWidgets.QWidget):
         self.view = GraphicsZoom(self.scene)
         self.scale_configuration = GraphicsScale(self)
 
-        root_layout = QtWidgets.QVBoxLayout(self)  # modifie la taille initiale de l'affichage
+        root_layout = QtWidgets.QVBoxLayout(self)
         toolbar = self.create_toolbar()
         root_layout.addLayout(toolbar)
-        root_layout.addWidget(self.view)  # l'image étant en fond d'écan, n'apparait pas dans le layout
+        root_layout.addWidget(self.view)
 
         screen = QtWidgets.QDesktopWidget()
         size_screen = screen.screenGeometry(screen.screenNumber(self))  # Initial window width (pixels) Initial window height (pixels)
@@ -139,11 +139,8 @@ class GraphicsWidget(QtWidgets.QWidget):
 
     def get_coordinates_scene(self):
         pos_cursor = self.cursor().pos()
-        #print("pixel pos", pos_cursor)
         pos_cursor_view = self.view.mapFromGlobal(pos_cursor)
-        #print("view pos", pos_cursor_view)
         pos_cursor_scene = self.view.mapToScene(pos_cursor_view)
-        #print("scene pos", pos_cursor_scene)
         return pos_cursor_scene
 
     def open_image(self):
@@ -250,10 +247,4 @@ def drag_mod(widget):
     else:
         widget.view.setDragMode(widget.view.NoDrag)
     widget.cursor_mode_reset()
-
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    Scene = GraphicsWidget()
-    sys.exit(app.exec_())
 

@@ -41,45 +41,48 @@ class FileAirport():
 
     def openFile(self):
         """Open the file selected in the file explorer of the computer"""
-        repository = QtWidgets.QFileDialog()
-        self.name = repository.getOpenFileName()
-        points, taxiways, runways = [], [], []
-        origin = QtCore.QPointF(0, 0)
-        factor = (1, 1, 1)
+        try:
+            repository = QtWidgets.QFileDialog()
+            self.name = repository.getOpenFileName()
+            points, taxiways, runways = [], [], []
+            origin = QtCore.QPointF(0, 0)
+            factor = (1, 1, 1)
 
-        path = self.name[0]
-        file = open(path, 'r')
-        airport_name = file.readline().split()[0]
-        lines = file.readlines()
-        for line in lines:
-            words = line.strip().split()
-            name = words[1]
-            try:
-                if words[0] == 'I':  # Image description
-                    self.image_repository = words[1]
-                    self.image_signal.ask_image_signal.emit(self.image_repository)
-                if words[0] == 'O':  # Origin and scale factor description
-                    xy_str = words[1].split(',')
-                    x, y = float(xy_str[0]), float(xy_str[1])
-                    origin = QtCore.QPointF(x, y)
-                    factor = (float(words[2]), float(words[3]), float(words[4]))
-                if words[0] == 'P':  # Point description
-                    pt_type = point_types[int(words[2])]
-                    points.append(airport.NamedPoint(name, pt_type, words[3]))
-                elif words[0] == 'L':  # Taxiway description
-                    speed = int(words[2])
-                    cat = categories[words[3]]
-                    one_way = words[4] == 'S'
-                    xys = xys_to_points(words[5:])
-                    taxiways.append(airport.Taxiway(name, speed, cat, one_way, xys))
-                elif words[0] == 'R':  # Runway description
-                    pts = tuple(words[4].split(','))
-                    xys = xys_to_points(words[5:])
-                    runways.append(airport.Runway(name, words[2], words[3], xys, pts))
-            except Exception as error:
-                print(error, line)
-            file.close()
-        self.airport = airport.Airport(airport_name, points, taxiways, runways, origin, factor)
+            path = self.name[0]
+            file = open(path, 'r')
+            airport_name = file.readline().split()[0]
+            lines = file.readlines()
+            for line in lines:
+                words = line.strip().split()
+                name = words[1]
+                try:
+                    if words[0] == 'I':  # Image description
+                        self.image_repository = words[1]
+                        self.image_signal.ask_image_signal.emit(self.image_repository)
+                    if words[0] == 'O':  # Origin and scale factor description
+                        xy_str = words[1].split(',')
+                        x, y = float(xy_str[0]), float(xy_str[1])
+                        origin = QtCore.QPointF(x, y)
+                        factor = (float(words[2]), float(words[3]), float(words[4]))
+                    if words[0] == 'P':  # Point description
+                        pt_type = point_types[int(words[2])]
+                        points.append(airport.NamedPoint(name, pt_type, words[3]))
+                    elif words[0] == 'L':  # Taxiway description
+                        speed = int(words[2])
+                        cat = categories[words[3]]
+                        one_way = words[4] == 'S'
+                        xys = xys_to_points(words[5:])
+                        taxiways.append(airport.Taxiway(name, speed, cat, one_way, xys))
+                    elif words[0] == 'R':  # Runway description
+                        pts = tuple(words[4].split(','))
+                        xys = xys_to_points(words[5:])
+                        runways.append(airport.Runway(name, words[2], words[3], xys, pts))
+                except Exception as error:
+                    print(error, line)
+                file.close()
+            self.airport = airport.Airport(airport_name, points, taxiways, runways, origin, factor)
+        except Exception:
+            pass
 
     def saveFile(self):
         """Save the file with its current name in its current location"""
@@ -128,9 +131,13 @@ class FileAirport():
                 os.remove(self.name[0])
         except Exception:
             pass
-        repository = QtWidgets.QFileDialog()
-        self.name = repository.getSaveFileName()
-        self.saveFile()
+
+        try:
+            repository = QtWidgets.QFileDialog()
+            self.name = repository.getSaveFileName()
+            self.saveFile()
+        except Exception as error:
+            print(error)
 
 
 def tuple_to_str(coords):
@@ -144,10 +151,4 @@ def xys_to_points(str_xy_list):
         x, y = map(int, str_xy.split(','))
         return geometry.Point(x, y)
 
-    return tuple(xy_to_point(str_xy) for str_xy in str_xy_list)
-
-
-if __name__ == "__main__":
-    aeroport = FileAirport()
-    aeroport.openFile("lfpg_map.txt")
-    aeroport.saveAsFile("new_lfbg_map.txt")
+    return list(xy_to_point(str_xy) for str_xy in str_xy_list)

@@ -60,7 +60,7 @@ class AirportInspector(QtWidgets.QWidget):
             toolbar.addWidget(button)
             return button
 
-        menu_object = add_menu_button('Named point data',
+        menu_object = add_menu_button('Named point selected',
                                       ['Named point data', lambda: (self.update_widget(self.named_point_widget),
                                                                     menu_object.setText("Named point selected"))],
                                       ['Taxiway data', lambda: (self.update_widget(self.taxiway_widget),
@@ -160,6 +160,7 @@ class AirportInspector(QtWidgets.QWidget):
                                           self.taxiway_widget.twy_cat, self.taxiway_widget.twy_one_way, coord)
                 item.line = taxiway
                 item.saved = True
+                item.type = LineType.TAXIWAY
                 self.draw.airport_file.airport.taxiways.append(taxiway)
             else:
                 item.line.name = self.taxiway_widget.twy_name
@@ -179,6 +180,7 @@ class AirportInspector(QtWidgets.QWidget):
                                         self.runway_widget.rwy_qfus[1], ends, self.runway_widget.rwy_named_point)
                 item.line = runway
                 item.saved = True
+                item.type = LineType.RUNWAY
                 self.draw.airport_file.airport.runways.append(runway)
                 self.draw.airport_file.airport.qfu_dict[runway.qfus[0]] = runway
                 self.draw.airport_file.airport.qfu_dict[runway.qfus[1]] = runway
@@ -249,7 +251,7 @@ class NamedPointInspector(Inspector):
     def __init__(self):
         super().__init__()
         self.pt_name = ""
-        self.pt_type = None  # None | PointType
+        self.pt_type = airport.PointType.STAND
 
         self.label_dic = self.create_label(['name_label', "Name"],
                                       ['type_label', "Point's type"],
@@ -277,7 +279,6 @@ class NamedPointInspector(Inspector):
 
     def reset(self):
         self.pt_name = ""
-        self.pt_type = None
         self.label_dic['coord_display'].setText("")
         self.name_edit.clear()
 
@@ -287,7 +288,7 @@ class TaxiwayInspector(Inspector):
         super().__init__()
         self.twy_name = ""
         self.twy_speed = 10
-        self.twy_cat = None  # None | WakeVortexCategory
+        self.twy_cat = airport.WakeVortexCategory.MEDIUM
         self.twy_one_way = False
 
         self.label_dic = self.create_label(['name_label', "Name"],
@@ -331,7 +332,7 @@ class TaxiwayInspector(Inspector):
     def reset(self):
         self.twy_name = ""
         self.twy_speed = 10
-        self.twy_cat = None
+        self.twy_cat = airport.WakeVortexCategory.MEDIUM
         self.twy_one_way = False
         self.label_dic['coord_display'].setText("")
         self.name_edit.clear()
@@ -371,10 +372,3 @@ class RunwayInspector(Inspector):
         self.name_edit.clear()
         self.qfus_edit.clear()
         self.named_points_edit.clear()
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    inspector = AirportInspector()
-    sys.exit(app.exec_())

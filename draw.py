@@ -12,7 +12,7 @@ class Mode(enum.Enum):
 
 
 class LineType(enum.Enum):
-    UNDEFINED = ''
+    UNDEFINED = None
     TAXIWAY = 'T'
     RUNWAY = 'R'
 
@@ -50,6 +50,10 @@ class LineItem():
             elif self.type == LineType.RUNWAY:
                 self.line.ends[position] = point
 
+    def del_point(self, i):
+        if self.saved:
+            self.line.coords.pop(i)
+
 
 class DrawAirport(scene.GraphicsWidget):
 
@@ -67,7 +71,7 @@ class DrawAirport(scene.GraphicsWidget):
         self.point_to_line_dict = {}
 
     def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.RightButton and self.cursor_mode == Mode.DEFAULT and not(self.highlighted_item is None) and (self.current_item is None or not(type(self.current_item) is QtWidgets.QGraphicsEllipseItem)):
+        if event.button() == QtCore.Qt.RightButton and self.cursor_mode == Mode.DEFAULT and not(self.highlighted_item is None) and (self.current_item is None or not(type(self.current_item) is QtWidgets.QGraphicsEllipseItem)) and not(type(self.highlighted_item) is QtWidgets.QGraphicsPathItem):
             removed_item = self.highlighted_item
             temporary_point = self.airport_items_dict.pop(removed_item)  # PointItem or LineItem
             self.scene.removeItem(removed_item)
@@ -85,17 +89,17 @@ class DrawAirport(scene.GraphicsWidget):
                 self.point_to_line_dict.pop(removed_item)
                 new_point_coord = self.airport_items_dict[self.last_drawn_point].coordinates
                 meters_point_coord = self.scale_configuration.scene_to_meters(new_point_coord)
-                for line_tuple in list_line_tuple :
+                for line_tuple in list_line_tuple:
                     line, i = line_tuple[0], line_tuple[1]
                     self.line_point_list = self.airport_items_dict[line].list_coordinates
-                    for point in [self.line_point_list[j] for j in range(len(self.line_point_list)) if j != i] :
+                    for point in [self.line_point_list[j] for j in range(len(self.line_point_list)) if j != i]:
                         length = len(self.point_to_line_dict[point[0]])
                         j = 0
-                        while j < length :
-                            if self.point_to_line_dict[point[0]][j][0] == line :
-                                 self.point_to_line_dict[point[0]].pop(j)
-                                 length -= 1
-                            else :
+                        while j < length:
+                            if self.point_to_line_dict[point[0]][j][0] == line:
+                                self.point_to_line_dict[point[0]].pop(j)
+                                length -= 1
+                            else:
                                 j += 1
                     self.line_point_list[i] = (self.last_drawn_point, new_point_coord)
                     temporary_line = self.airport_items_dict.pop(line)
@@ -107,7 +111,10 @@ class DrawAirport(scene.GraphicsWidget):
                     self.line_point_list = []
         if self.cursor_mode == Mode.DRAW_POINT or self.cursor_mode == Mode.DRAW_LINE:
             self.draw_point()
+            if self.highlighted_item is not None:
+                unhighlight(self.highlighted_item, self)
             self.highlighted_item = self.last_drawn_point
+            highlight(self.highlighted_item, self)
             self.signal.ask_inspection_signal.emit()
         if self.cursor_mode == Mode.DELETE:
             self.delete()
@@ -124,6 +131,7 @@ class DrawAirport(scene.GraphicsWidget):
             elif self.highlighted_item is not None:
                 unhighlight(self.highlighted_item, self)
                 self.highlighted_item = None
+                self.clicked_item = None
                 self.signal.ask_inspection_signal.emit()
         self.view.update()
 
@@ -155,7 +163,7 @@ class DrawAirport(scene.GraphicsWidget):
         return ellipse
 
     def draw_point(self):
-        if self.current_item is None or not (type(self.current_item) is QtWidgets.QGraphicsEllipseItem) :
+        if self.current_item is None or not (type(self.current_item) is QtWidgets.QGraphicsEllipseItem):
             width = 20
             color = QtGui.QColor(255, 0, 0)
             if self.scale_configuration.scale_set:
@@ -187,10 +195,10 @@ class DrawAirport(scene.GraphicsWidget):
         self.airport_items_dict[line] = LineItem(self.line_point_list)
         i = 0
         for point in self.line_point_list:
-            if point[0] in self.point_to_line_dict :
-                self.point_to_line_dict[point[0]].append((line,i))
-            else :
-                self.point_to_line_dict[point[0]] = [(line,i)]
+            if point[0] in self.point_to_line_dict:
+                self.point_to_line_dict[point[0]].append((line, i))
+            else:
+                self.point_to_line_dict[point[0]] = [(line, i)]
             i += 1
 
     def delete(self):
@@ -198,33 +206,37 @@ class DrawAirport(scene.GraphicsWidget):
             if self.current_item in self.point_to_line_dict:
                 list_line = self.point_to_line_dict[self.current_item]
                 self.point_to_line_dict.pop(self.current_item)
-                for line in list_line :
-                    l, i = line[0], line[1]
-                    self.line_point_list = self.airport_items_dict[l].list_coordinates
+                for line_tuple in list_line:
+                    line, i = line_tuple[0], line_tuple[1]
+                    self.line_point_list = self.airport_items_dict[line].list_coordinates
                     length_list = len(self.line_point_list)
                     if length_list >= 3:
                         for point in [self.line_point_list[j] for j in range(len(self.line_point_list)) if j != i]:
                             length = len(self.point_to_line_dict[point[0]])
                             j = 0
                             while j < length:
-                                if self.point_to_line_dict[point[0]][j][0] == l:
+                                if self.point_to_line_dict[point[0]][j][0] == line:
                                     self.point_to_line_dict[point[0]].pop(j)
                                     length -= 1
                                 else:
                                      j += 1
                         self.line_point_list.pop(i)
-                        self.scene.removeItem(l)
-                        self.airport_items_dict.pop(l)
+                        self.scene.removeItem(line)
+                        temporary_line = self.airport_items_dict.pop(line)
                         self.draw_line()
+                        temporary_line.del_point(i)
+                        last_key_value = self.airport_items_dict.popitem()
+                        self.airport_items_dict[last_key_value[0]] = temporary_line
+
                     elif length_list == 2:
-                        self.scene.removeItem(l)
+                        self.scene.removeItem(line)
                         pos = 1 - i
                         other_point = self.line_point_list[pos][0]
                         length = len(self.point_to_line_dict[other_point])
                         if length > 1:
                             j = 0
                             while j < length:
-                                if self.point_to_line_dict[other_point][j][0] == l:
+                                if self.point_to_line_dict[other_point][j][0] == line:
                                     self.point_to_line_dict[other_point].pop(j)
                                     length -= 1
                                 else:
@@ -232,9 +244,12 @@ class DrawAirport(scene.GraphicsWidget):
                         else:
                             self.point_to_line_dict.pop(other_point)
                             self.scene.removeItem(other_point)
-                        self.airport_items_dict.pop(l)
+                        item = self.airport_items_dict.pop(line)
+                        if item.saved:
+                            self.del_twy_rwy(item)
                     self.line_point_list = []
-            if type(self.current_item) is QtWidgets.QGraphicsPathItem:
+
+            elif type(self.current_item) is QtWidgets.QGraphicsPathItem:
                 for point in self.airport_items_dict[self.current_item].list_coordinates:
                     length = len(self.point_to_line_dict[point[0]])
                     if length > 1:
@@ -247,12 +262,32 @@ class DrawAirport(scene.GraphicsWidget):
                                 j += 1
                     else:
                         self.point_to_line_dict.pop(point[0])
+                item = self.airport_items_dict[self.current_item]
+                self.del_twy_rwy(item)
+            else:
+                item = self.airport_items_dict[self.current_item]
+                if item.saved:
+                    index = self.airport_file.airport.points.index(item.point)
+                    self.airport_file.airport.points.pop(index)
+                    self.airport_file.airport.pt_dict.pop(item.point.name)
             self.scene.removeItem(self.current_item)
             self.airport_items_dict.pop(self.current_item)
         self.on_item = False
         self.current_item = None
 
+    def del_twy_rwy(self, item):
+        if item.saved:
+            if item.type == LineType.TAXIWAY:
+                index = self.airport_file.airport.taxiways.index(item.line)
+                self.airport_file.airport.taxiways.pop(index)
+            elif item.type == LineType.RUNWAY:
+                index = self.airport_file.airport.runways.index(item.line)
+                self.airport_file.airport.runways.pop(index)
+                self.airport_file.airport.qfu_dict.pop(item.line.qfus[0])
+                self.airport_file.airport.qfu_dict.pop(item.line.qfus[1])
+
     def draw_airport_points(self):
+        self.airport_file.airport.display_name()
         apt = self.airport_file.airport
         width = 20
         color = QtGui.QColor(255, 0, 0)
@@ -289,10 +324,10 @@ class DrawAirport(scene.GraphicsWidget):
             line.setZValue(0)
             i = 0
             for point in line_point_list:
-                if point in self.point_to_line_dict :
-                    self.point_to_line_dict[point[0]].append((line,i))
-                else :
-                    self.point_to_line_dict[point[0]] = [(line,i)]
+                if point[0] in self.point_to_line_dict:
+                    self.point_to_line_dict[point[0]].append((line, i))
+                else:
+                    self.point_to_line_dict[point[0]] = [(line, i)]
                 i += 1
             self.airport_items_dict[line] = LineItem(line_point_list, True)
             self.airport_items_dict[line].line = taxiway
@@ -351,10 +386,4 @@ def setHighlight(item, widget):
     item.setAcceptHoverEvents(True)
     item.hoverEnterEvent = lambda event: highlight(item, widget)
     item.hoverLeaveEvent = lambda event: unhighlight(item, widget)
-
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    Scene = DrawAirport()
-    sys.exit(app.exec_())
 
