@@ -22,7 +22,7 @@ class FileAirport():
 
     def __init__(self):
         self.name = ""
-        self.airport = airport.Airport()  # airport.Airport()
+        self.airport = airport.Airport()
         self.image_signal = ImageSignal()
         self.image_repository = ""
 

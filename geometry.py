@@ -1,5 +1,5 @@
 class Point(object):
-    """indiquer unité x et y (en mètre dans py-airport"""
+    """units are in meters for x and y"""
 
     def __init__(self, x, y):
         self.x = x

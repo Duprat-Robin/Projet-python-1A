@@ -10,7 +10,7 @@ ARROW, CROSS = 0, 2
 
 
 class GraphicsZoom(QtWidgets.QGraphicsView):
-    """Contrôle le zoom de l'application"""
+    """Control of the application's zoom"""
     def __init__(self, scene):
         super().__init__(scene)
         # enable anti-aliasing
@@ -32,7 +32,7 @@ class GraphicsZoom(QtWidgets.QGraphicsView):
 
 
 class GraphicsScale(QtWidgets.QWidget):
-    """Définition de l'échelle pour passer des coordonnées métriques de la réalité aux pixel de l'écran"""
+    """Define scale factor and origin's position"""
     def __init__(self, widget):
         super().__init__(widget)
         self.widget = widget
@@ -46,9 +46,7 @@ class GraphicsScale(QtWidgets.QWidget):
         self.meters_value = 1
         self.nbr_pixels = 1
 
-
     def setScale(self):
-        """Création de l'échelle: faire en sorte de pouvoir saisir la distance dans un popup menu"""
         if self.scale_point == 0:
             self.start_pos = self.widget.get_coordinates_scene()
         elif self.scale_point == 1:
@@ -66,7 +64,7 @@ class GraphicsScale(QtWidgets.QWidget):
         self.scale_set = True
 
     def setOrigin(self):
-        """coordonnées dans scene"""
+        """Origin in scene coordinates"""
         self.origin_pos = self.widget.get_coordinates_scene()
         self.widget.airport_file.airport.origin = self.origin_pos
         self.origin_set = False
@@ -82,7 +80,7 @@ class GraphicsScale(QtWidgets.QWidget):
         return point1.distance(point2)
 
     def screen_to_map(self, temp_origin):
-        """find the point on the map from is screen position"""
+        """find the point on the map from its screen position"""
         current_cursor_pos_screen = super().cursor().pos()
         current_cursor_pos_map = ZOOM_FACTOR * factor * self.distance(current_cursor_pos_screen, temp_origin)
         return current_cursor_pos_map
@@ -144,11 +142,13 @@ class GraphicsWidget(QtWidgets.QWidget):
         return pos_cursor_scene
 
     def open_image(self):
+        """Get the repository of the image through a Dialog Box"""
         repository = QtWidgets.QFileDialog()
         self.airport_file.image_repository = str(repository.getOpenFileName()[0])
         self.open_repository_image(self.airport_file.image_repository)
 
     def open_repository_image(self, repository):
+        """Open the image from a specific repository"""
         self.image.load(repository)
         self.scene.addPixmap(self.image)
 

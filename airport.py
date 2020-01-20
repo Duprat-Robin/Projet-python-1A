@@ -96,7 +96,7 @@ class Airport:
         self.runways = runways
         self.pt_dict = {p.name: p for p in points}
         self.qfu_dict = {r.qfus[i]: r for r in runways for i in range(2)}
-        self.items_dict = {}  # item: coordinates
+        self.items_dict = {}  # item: coordinates | items are EllipseItem or PathItem
         self.airport_name_edit = QtWidgets.QLineEdit()
 
         self.origin = origin

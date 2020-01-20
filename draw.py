@@ -4,7 +4,7 @@ import scene, geometry
 
 
 class Mode(enum.Enum):
-    """0: default mode (draw disable) 1: draw points 2: draw lines 3: erase items"""
+    """0: default mode (draw disabled) 1: draw points 2: draw lines 3: erase items"""
     DEFAULT = 0
     DRAW_POINT = 1
     DRAW_LINE = 2
@@ -22,6 +22,7 @@ class InspectorSignal(QtCore.QObject):
 
 
 class PointItem():
+    """Link between a geometrical point and its aeronautical signification"""
     def __init__(self, coordinates, saved=False):
         self.coordinates = coordinates
         self.saved = saved
@@ -35,6 +36,7 @@ class PointItem():
 
 
 class LineItem():
+    """Link between a geometrical PolyLine and its aeronautical signification"""
     def __init__(self, list_coordinates, saved=False):
         self.list_coordinates = list_coordinates
         self.saved = saved
@@ -56,7 +58,7 @@ class LineItem():
 
 
 class DrawAirport(scene.GraphicsWidget):
-
+    """Lead all mouse press events and cursor modes"""
     def __init__(self):
         super().__init__()
         self.airport_items_dict = self.airport_file.airport.items_dict
@@ -181,7 +183,6 @@ class DrawAirport(scene.GraphicsWidget):
                 self.line_point_list.append((point, pos_cursor_scene))
         elif self.cursor_mode == Mode.DRAW_LINE:
             self.line_point_list.append((self.current_item, self.airport_items_dict[self.current_item].coordinates))
-        # print("test", pos_cursor_scene, self.scale_configuration.meters_to_scene(self.scale_configuration.scene_to_meters(pos_cursor_scene)))
 
     def draw_line(self):
         path = QtGui.QPainterPath()

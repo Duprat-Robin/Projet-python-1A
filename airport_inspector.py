@@ -20,7 +20,7 @@ class Box(enum.Enum):
 
 
 class AirportInspector(QtWidgets.QWidget):
-
+    """Send airport objects data to file_airport attribute through the scene"""
     def __init__(self, the_draw):
         super().__init__()
         self.named_point_widget = NamedPointInspector()
@@ -196,6 +196,7 @@ class AirportInspector(QtWidgets.QWidget):
 
 
 class Inspector(QtWidgets.QWidget):
+    """Simplify the creation of the following inspectors"""
     def __init__(self):
         super().__init__()
         self.setFixedWidth(INSPECTOR_WIDTH)  # Inspector's Width is fixed
